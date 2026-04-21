@@ -3,4 +3,5 @@
   <Project Path="POS.Application/POS.Application.csproj" />
   <Project Path="POS.Domain/POS.Domain.csproj" />
   <Project Path="POS.Infrastructure/POS.Infrastructure.csproj" />
+  <Project Path="POS.Test/POS.Test.csproj" Id="859163b8-73e9-414b-83eb-592f62e77296" />
 </Solution>
