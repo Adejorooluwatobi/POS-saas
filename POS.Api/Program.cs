@@ -5,6 +5,7 @@ using POS.Infrastructure.Tenancy;
 using POS.Domain.Interfaces;
 using POS.Application;
 using Microsoft.EntityFrameworkCore;
+using POS.Api.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -69,6 +70,8 @@ public class Program
         var app = builder.Build();
 
         // ── Pipeline ───────────────────────────────────────────────────────
+        app.ApplyMigrations();
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
