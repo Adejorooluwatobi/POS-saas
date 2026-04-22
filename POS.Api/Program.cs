@@ -19,6 +19,17 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Replace environment variable placeholders
+        var config = builder.Configuration;
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL") 
+            ?? config.GetConnectionString("DefaultConnection");
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+            ?? config["Jwt:Secret"];
+
+        // Override the configuration values
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+        builder.Configuration["Jwt:Secret"] = jwtSecret;
+
         // ── Core Services ──────────────────────────────────────────────────
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
