@@ -19,16 +19,36 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Replace environment variable placeholders
+        // ── Configuration & Environment ────────────────────────────────────
         var config = builder.Configuration;
-        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL") 
+        var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
             ?? config.GetConnectionString("DefaultConnection");
+
+        // Handle case where environment variable is not set and fallback is the literal placeholder
+        if (string.IsNullOrEmpty(rawConnectionString) || rawConnectionString.Contains("${DATABASE_URL}"))
+        {
+            rawConnectionString = null;
+        }
+
+        var databaseUrl = ParseDatabaseUrl(rawConnectionString);
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
             ?? config["Jwt:Secret"];
 
-        // Override the configuration values
-        builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
-        builder.Configuration["Jwt:Secret"] = jwtSecret;
+        if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Contains("${JWT_SECRET}"))
+        {
+            jwtSecret = null;
+        }
+
+        // Override the configuration values for the rest of the application
+        if (!string.IsNullOrEmpty(databaseUrl))
+        {
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+        }
+        
+        if (!string.IsNullOrEmpty(jwtSecret))
+        {
+            builder.Configuration["Jwt:Secret"] = jwtSecret;
+        }
 
         // ── Core Services ──────────────────────────────────────────────────
         builder.Services.AddControllers();
@@ -100,5 +120,33 @@ public class Program
         app.MapControllers().RequireAuthorization();
 
         app.Run();
+    }
+
+    private static string? ParseDatabaseUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return null;
+
+        // If it's already a standard connection string, return as is
+        if (!url.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+            return url;
+
+        try
+        {
+            var uri = new Uri(url);
+            var userInfo = uri.UserInfo.Split(':');
+            var username = userInfo[0];
+            var password = userInfo.Length > 1 ? userInfo[1] : "";
+            var host = uri.Host;
+            var port = uri.Port > 0 ? uri.Port : 5432;
+            var database = uri.AbsolutePath.TrimStart('/');
+
+            // Render and other cloud providers often require SSL
+            return $"Host={host};Port={port};Username={username};Password={password};Database={database};SSL Mode=Require;Trust Server Certificate=true";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing DATABASE_URL: {ex.Message}");
+            return url; // Fallback to original if parsing fails
+        }
     }
 }
