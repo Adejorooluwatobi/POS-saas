@@ -156,9 +156,7 @@ public class Program
             var database = uri.AbsolutePath.TrimStart('/');
 
             // Render and other cloud providers often require SSL.
-            // Integrated Security=false disables GSSAPI/Kerberos negotiation, preventing
-            // Npgsql from probing for libgssapi_krb5.so.2 which is absent on Render.
-            return $"Host={host};Port={port};Username={username};Password={password};Database={database};SSL Mode=Require;Trust Server Certificate=true;Integrated Security=false";
+            return $"Host={host};Port={port};Username={username};Password={password};Database={database};SSL Mode=Require;Trust Server Certificate=true";
         }
         catch (Exception ex)
         {
