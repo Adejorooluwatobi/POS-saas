@@ -5,6 +5,7 @@ using POS.Infrastructure.Tenancy;
 using POS.Domain.Interfaces;
 using POS.Application;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using POS.Api.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -102,7 +103,11 @@ public class Program
         builder.Services.AddDbContext<RetailOsDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString)
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
+                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>())
+                   .ConfigureWarnings(w =>
+                       // This warning is expected: global query filters use a runtime tenant ID
+                       // which EF Core flags as a non-deterministic model change. Intentional.
+                       w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
         var app = builder.Build();
@@ -150,8 +155,10 @@ public class Program
             var port = uri.Port > 0 ? uri.Port : 5432;
             var database = uri.AbsolutePath.TrimStart('/');
 
-            // Render and other cloud providers often require SSL
-            return $"Host={host};Port={port};Username={username};Password={password};Database={database};SSL Mode=Require;Trust Server Certificate=true";
+            // Render and other cloud providers often require SSL.
+            // Integrated Security=false disables GSSAPI/Kerberos negotiation, preventing
+            // Npgsql from probing for libgssapi_krb5.so.2 which is absent on Render.
+            return $"Host={host};Port={port};Username={username};Password={password};Database={database};SSL Mode=Require;Trust Server Certificate=true;Integrated Security=false";
         }
         catch (Exception ex)
         {
