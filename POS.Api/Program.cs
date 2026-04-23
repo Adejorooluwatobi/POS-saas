@@ -115,16 +115,13 @@ public class Program
         // ── Pipeline ───────────────────────────────────────────────────────
         app.ApplyMigrations();
 
-        if (app.Environment.IsDevelopment())
+        app.MapOpenApi();
+        app.MapScalarApiReference(options =>
         {
-            app.MapOpenApi();
-            app.MapScalarApiReference(options =>
-            {
-                options.Title = "RetailOS POS API";
-                options.Theme = ScalarTheme.DeepSpace;
-                options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
-            });
-        }
+            options.Title = "RetailOS POS API";
+            options.Theme = ScalarTheme.DeepSpace;
+            options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+        });
 
         app.UseHttpsRedirection();
         app.UseAuthentication(); // Ensure Authentication is before Authorization
