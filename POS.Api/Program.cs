@@ -20,6 +20,44 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // ── Configuration & Environment ────────────────────────────────────
+        var config = builder.Configuration;
+        var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
+            ?? config.GetConnectionString("DefaultConnection");
+
+        // Handle case where environment variable is not set and fallback is the literal placeholder
+        if (string.IsNullOrEmpty(rawConnectionString) || rawConnectionString.Contains("${DATABASE_URL}"))
+        {
+            rawConnectionString = null;
+        }
+
+        var databaseUrl = ParseDatabaseUrl(rawConnectionString);
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+            ?? config["Jwt:Secret"];
+
+        if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Contains("${JWT_SECRET}"))
+        {
+            jwtSecret = null;
+        }
+
+        // Override the configuration values for the rest of the application
+        if (!string.IsNullOrEmpty(databaseUrl))
+        {
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+            Console.WriteLine("Database connection string resolved from environment.");
+        }
+        else
+        {
+            // Clear the placeholder if it exists to avoid Npgsql parsing errors
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = "";
+            Console.WriteLine("Warning: Database connection string is missing or invalid.");
+        }
+        
+        if (!string.IsNullOrEmpty(jwtSecret))
+        {
+            builder.Configuration["Jwt:Secret"] = jwtSecret;
+        }
+
         // ── Core Services ──────────────────────────────────────────────────
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
@@ -65,7 +103,11 @@ public class Program
         builder.Services.AddDbContext<RetailOsDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString)
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
+                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>())
+                   .ConfigureWarnings(w =>
+                       // This warning is expected: global query filters use a runtime tenant ID
+                       // which EF Core flags as a non-deterministic model change. Intentional.
+                       w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
         var app = builder.Build();
