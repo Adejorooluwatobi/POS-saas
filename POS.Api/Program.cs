@@ -43,6 +43,13 @@ public class Program
         if (!string.IsNullOrEmpty(databaseUrl))
         {
             builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+            Console.WriteLine("Database connection string resolved from environment.");
+        }
+        else
+        {
+            // Clear the placeholder if it exists to avoid Npgsql parsing errors
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = "";
+            Console.WriteLine("Warning: Database connection string is missing or invalid.");
         }
         
         if (!string.IsNullOrEmpty(jwtSecret))
@@ -127,7 +134,10 @@ public class Program
         if (string.IsNullOrEmpty(url)) return null;
 
         // If it's already a standard connection string, return as is
-        if (!url.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+        bool isUri = url.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) || 
+                     url.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase);
+
+        if (!isUri)
             return url;
 
         try
