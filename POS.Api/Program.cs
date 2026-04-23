@@ -5,6 +5,7 @@ using POS.Infrastructure.Tenancy;
 using POS.Domain.Interfaces;
 using POS.Application;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using POS.Api.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -59,8 +60,8 @@ public class Program
         builder.Services.AddScoped<AuditInterceptor>();
 
         // ── Database Context ───────────────────────────────────────────────
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        
+        var connectionString = GetConnectionString(builder.Configuration);
+
         builder.Services.AddDbContext<RetailOsDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString)
@@ -89,5 +90,28 @@ public class Program
         app.MapControllers().RequireAuthorization();
 
         app.Run();
+    }
+
+    private static string GetConnectionString(IConfiguration configuration)
+    {
+        var databaseUrl = configuration["DATABASE_URL"];
+        if (!string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            var uri = new Uri(databaseUrl);
+            var userInfo = uri.UserInfo.Split(':', 2);
+            var username = userInfo.Length > 0 ? userInfo[0] : string.Empty;
+            var password = userInfo.Length > 1 ? userInfo[1] : string.Empty;
+            var database = uri.AbsolutePath.TrimStart('/');
+
+            return $"Host={uri.Host};Port={uri.Port};Database={database};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true";
+        }
+
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Database connection string is not configured. Set ConnectionStrings__DefaultConnection or DATABASE_URL.");
+        }
+
+        return connectionString;
     }
 }
