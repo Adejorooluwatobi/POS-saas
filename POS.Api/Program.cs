@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.OpenApi;
 
 namespace POS.Api;
 
@@ -63,7 +64,29 @@ public class Program
 
         // ── Core Services ──────────────────────────────────────────────────
         builder.Services.AddControllers();
-        builder.Services.AddOpenApi();
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer((document, context, cancellationToken) =>
+            {
+                var scheme = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Please enter token"
+                };
+
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes.Add("Bearer", scheme);
+
+                var requirement = new OpenApiSecurityRequirement();
+                requirement.Add(new OpenApiSecuritySchemeReference("Bearer", document), new List<string>());
+                document.Security.Add(requirement);
+
+                return Task.CompletedTask;
+            });
+        });
         
         builder.Services.AddCors(options =>
         {
@@ -145,6 +168,10 @@ public class Program
             options.Title = "RetailOS POS API";
             options.Theme = ScalarTheme.DeepSpace;
             options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+            options.Authentication = new ScalarAuthenticationOptions
+            {
+                PreferredSecuritySchemes = ["Bearer"]
+            };
         });
 
         app.UseHttpsRedirection();
