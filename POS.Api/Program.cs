@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Scalar.AspNetCore;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace POS.Api;
 
@@ -18,6 +19,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        DotNetEnv.Env.TraversePath().Load();
+
         var builder = WebApplication.CreateBuilder(args);
 
         // ── Configuration & Environment ────────────────────────────────────
@@ -61,6 +64,16 @@ public class Program
         // ── Core Services ──────────────────────────────────────────────────
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
+        
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
+        });
         
         // ── Authentication & Authorization ─────────────────────────────────
         var secret = builder.Configuration["Jwt:Secret"] ?? "RetailOS_SuperSecretKey_BecauseThisIsDev_LengthMustBeAtLeast32Chars!";
@@ -110,7 +123,18 @@ public class Program
                        w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
+        // ── Forwarded Headers (For Render/Reverse Proxies) ─────────────────
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // Clear known networks/proxies so it accepts forwarded headers from Render
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
         var app = builder.Build();
+
+        app.UseForwardedHeaders();
 
         // ── Pipeline ───────────────────────────────────────────────────────
         app.ApplyMigrations();
@@ -124,6 +148,7 @@ public class Program
         });
 
         app.UseHttpsRedirection();
+        app.UseCors("AllowAll");
         app.UseAuthentication(); // Ensure Authentication is before Authorization
         app.UseAuthorization();
         app.MapControllers().RequireAuthorization();
