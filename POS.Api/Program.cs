@@ -78,8 +78,14 @@ public class Program
                 };
 
                 document.Components ??= new OpenApiComponents();
-                document.Components.SecuritySchemes.Add("Bearer", scheme);
+                document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+                
+                if (!document.Components.SecuritySchemes.ContainsKey("Bearer"))
+                {
+                    document.Components.SecuritySchemes.Add("Bearer", scheme);
+                }
 
+                document.Security ??= new List<OpenApiSecurityRequirement>();
                 var requirement = new OpenApiSecurityRequirement();
                 requirement.Add(new OpenApiSecuritySchemeReference("Bearer", document), new List<string>());
                 document.Security.Add(requirement);
@@ -151,7 +157,7 @@ public class Program
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             // Clear known networks/proxies so it accepts forwarded headers from Render
-            options.KnownNetworks.Clear();
+            options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
         });
 
