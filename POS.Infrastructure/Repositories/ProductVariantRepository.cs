@@ -9,4 +9,11 @@ public class ProductVariantRepository : GenericRepository<ProductVariant>, IProd
     public ProductVariantRepository(RetailOsDbContext context) : base(context)
     {
     }
+
+    public async Task<IEnumerable<ProductVariant>> GetByProductIdAsync(Guid productId)
+    {
+        return await _context.ProductVariants
+            .Where(v => v.ProductId == productId)
+            .ToListAsync();
+    }
 }
