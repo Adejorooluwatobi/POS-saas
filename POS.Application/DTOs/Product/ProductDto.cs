@@ -12,6 +12,8 @@ public class ProductDto
     public string? Description { get; set; }
     public TaxCategory TaxCategory { get; set; }
     public bool IsActive { get; set; }
+    public decimal BasePrice { get; set; }
+    public decimal CostPrice { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
