@@ -16,6 +16,7 @@ public class CreateCategoryCommandHandlerTests
     private readonly Mock<ICategoryRepository> _categoryRepoMock;
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<ITenantContext> _tenantContextMock;
     private readonly CreateCategoryCommandHandler _handler;
 
     public CreateCategoryCommandHandlerTests()
@@ -23,11 +24,13 @@ public class CreateCategoryCommandHandlerTests
         _categoryRepoMock = new Mock<ICategoryRepository>();
         _uowMock = new Mock<IUnitOfWork>();
         _mapperMock = new Mock<IMapper>();
+        _tenantContextMock = new Mock<ITenantContext>();
 
         _handler = new CreateCategoryCommandHandler(
             _categoryRepoMock.Object,
             _uowMock.Object,
-            _mapperMock.Object
+            _mapperMock.Object,
+            _tenantContextMock.Object
         );
     }
 
@@ -49,6 +52,7 @@ public class CreateCategoryCommandHandlerTests
             TenantId = tenantId
         };
 
+        _tenantContextMock.Setup(t => t.TenantId).Returns(tenantId);
         _mapperMock.Setup(m => m.Map<Category>(dto)).Returns(categoryEntity);
 
         // Act

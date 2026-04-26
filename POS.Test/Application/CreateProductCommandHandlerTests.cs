@@ -16,6 +16,7 @@ public class CreateProductCommandHandlerTests
     private readonly Mock<IProductRepository> _productRepoMock;
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<ITenantContext> _tenantContextMock;
     private readonly CreateProductCommandHandler _handler;
 
     public CreateProductCommandHandlerTests()
@@ -23,11 +24,13 @@ public class CreateProductCommandHandlerTests
         _productRepoMock = new Mock<IProductRepository>();
         _uowMock = new Mock<IUnitOfWork>();
         _mapperMock = new Mock<IMapper>();
+        _tenantContextMock = new Mock<ITenantContext>();
 
         _handler = new CreateProductCommandHandler(
             _productRepoMock.Object,
             _uowMock.Object,
-            _mapperMock.Object
+            _mapperMock.Object,
+            _tenantContextMock.Object
         );
     }
 
@@ -42,8 +45,10 @@ public class CreateProductCommandHandlerTests
             TaxCategory = TaxCategory.Standard
         };
         var command = new CreateProductCommand(dto);
-        var productEntity = new Product { Name = dto.Name, MasterSku = dto.MasterSku, TenantId = Guid.NewGuid() };
+        var tenantId = Guid.NewGuid();
+        var productEntity = new Product { Name = dto.Name, MasterSku = dto.MasterSku, TenantId = tenantId };
 
+        _tenantContextMock.Setup(t => t.TenantId).Returns(tenantId);
         _mapperMock.Setup(m => m.Map<Product>(dto)).Returns(productEntity);
 
         // Act

@@ -12,12 +12,14 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
     private readonly IProductRepository _repository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly ITenantContext _tenantContext;
 
-    public CreateProductCommandHandler(IProductRepository repository, IUnitOfWork uow, IMapper mapper)
+    public CreateProductCommandHandler(IProductRepository repository, IUnitOfWork uow, IMapper mapper, ITenantContext tenantContext)
     {
         _repository = repository;
         _uow = uow;
         _mapper = mapper;
+        _tenantContext = tenantContext;
     }
 
     public async Task<ProductDto> Handle(CreateProductCommand request, CancellationToken cancellationToken)
