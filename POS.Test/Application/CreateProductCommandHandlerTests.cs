@@ -17,6 +17,7 @@ public class CreateProductCommandHandlerTests
     private readonly Mock<IUnitOfWork> _uowMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ITenantContext> _tenantContextMock;
+    private readonly Mock<IProductVariantRepository> _variantRepoMock;
     private readonly CreateProductCommandHandler _handler;
 
     public CreateProductCommandHandlerTests()
@@ -25,9 +26,11 @@ public class CreateProductCommandHandlerTests
         _uowMock = new Mock<IUnitOfWork>();
         _mapperMock = new Mock<IMapper>();
         _tenantContextMock = new Mock<ITenantContext>();
+        _variantRepoMock = new Mock<IProductVariantRepository>();
 
         _handler = new CreateProductCommandHandler(
             _productRepoMock.Object,
+            _variantRepoMock.Object,
             _uowMock.Object,
             _mapperMock.Object,
             _tenantContextMock.Object
@@ -56,6 +59,7 @@ public class CreateProductCommandHandlerTests
 
         // Assert
         _productRepoMock.Verify(r => r.AddAsync(productEntity), Times.Once);
+        _variantRepoMock.Verify(r => r.AddAsync(It.IsAny<ProductVariant>()), Times.Once);
         _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }
