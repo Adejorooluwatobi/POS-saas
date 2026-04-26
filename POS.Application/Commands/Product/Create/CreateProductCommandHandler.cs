@@ -22,7 +22,15 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 
     public async Task<ProductDto> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
+        var tenantId = _tenantContext.TenantId ?? request.Dto.TenantId;
+        if (tenantId == null)
+        {
+            throw new UnauthorizedAccessException("Tenant context is missing.");
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
+        entity.TenantId = tenantId.Value;
+
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<ProductDto>(entity);

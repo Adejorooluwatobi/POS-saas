@@ -24,8 +24,16 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
 
     public async Task<CategoryDto> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
+        var tenantId = _tenantContext.TenantId ?? request.Dto.TenantId;
+        
+        if (tenantId == null || tenantId == Guid.Empty)
+        {
+            throw new UnauthorizedAccessException("Tenant context is missing. SuperAdmins must provide a TenantId.");
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
-        entity.TenantId = _tenantContext.TenantId;
+        entity.TenantId = tenantId.Value;
+        
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<CategoryDto>(entity);
