@@ -14,6 +14,8 @@ public class ProductDto
     public bool IsActive { get; set; }
     public decimal BasePrice { get; set; }
     public decimal CostPrice { get; set; }
+    public decimal? WeightGrams { get; set; }
+    public string? UnitOfMeasure { get; set; } = "Each";
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

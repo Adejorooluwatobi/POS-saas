@@ -74,7 +74,9 @@ public class MappingProfile : Profile
         // ── Product ───────────────────────────────────────────────────────
         CreateMap<Product, ProductDto>()
             .ForMember(d => d.BasePrice, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.BasePrice : 0))
-            .ForMember(d => d.CostPrice, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.CostPrice : 0));
+            .ForMember(d => d.CostPrice, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.CostPrice : 0))
+            .ForMember(d => d.WeightGrams, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.WeightGrams : null))
+            .ForMember(d => d.UnitOfMeasure, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.UnitOfMeasure : "Each"));
         CreateMap<CreateProductDto, Product>();
         CreateMap<UpdateProductDto, Product>()
             .ForMember(d => d.Id, o => o.Ignore())
