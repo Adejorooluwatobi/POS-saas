@@ -14,8 +14,8 @@ public class InventoryRepository : GenericRepository<Inventory>, IInventoryRepos
 
     public override async Task<PagedResult<Inventory>> GetPagedAsync(int pageNumber, int pageSize)
     {
-        var query = _context.Inventory
-            .Include(i => i.ProductVariant);
+        var query = _context.Inventories
+            .Include(i => i.Variant);
 
         var count = await query.CountAsync();
         var items = await query.Skip((pageNumber - 1) * pageSize)

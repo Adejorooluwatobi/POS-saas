@@ -12,4 +12,6 @@ public class UpdateStaffDto
     public string FirstName { get; set; } = default!;
     public string LastName { get; set; } = default!;
     public bool IsActive { get; set; }
+    public string? Pin { get; set; }
+    public string? Password { get; set; }
 }

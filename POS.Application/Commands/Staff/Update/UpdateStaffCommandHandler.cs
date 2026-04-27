@@ -10,12 +10,14 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
     private readonly IStaffRepository _repository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly IPasswordService _passwordService;
 
-    public UpdateStaffCommandHandler(IStaffRepository repository, IUnitOfWork uow, IMapper mapper)
+    public UpdateStaffCommandHandler(IStaffRepository repository, IUnitOfWork uow, IMapper mapper, IPasswordService passwordService)
     {
         _repository = repository;
         _uow = uow;
         _mapper = mapper;
+        _passwordService = passwordService;
     }
 
     public async Task Handle(UpdateStaffCommand request, CancellationToken cancellationToken)
@@ -24,6 +26,16 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
             ?? throw new KeyNotFoundException($"Staff {request.Id} not found.");
 
         _mapper.Map(request.Dto, entity);
+
+        if (!string.IsNullOrWhiteSpace(request.Dto.Pin))
+        {
+            entity.PinHash = _passwordService.Hash(request.Dto.Pin);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Dto.Password))
+        {
+            entity.PasswordHash = _passwordService.Hash(request.Dto.Password);
+        }
         _repository.Update(entity);
         await _uow.SaveChangesAsync(cancellationToken);
     }
