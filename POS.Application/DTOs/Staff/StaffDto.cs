@@ -17,4 +17,6 @@ public class StaffDto
     public bool IsActive { get; set; }
     public DateOnly HiredAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public bool HasPin { get; set; }
+    public bool HasPassword { get; set; }
 }

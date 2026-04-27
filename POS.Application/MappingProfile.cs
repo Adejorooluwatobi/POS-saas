@@ -41,7 +41,9 @@ public class MappingProfile : Profile
 
         // ── Staff ─────────────────────────────────────────────────────────
         CreateMap<Staff, StaffDto>()
-            .ForMember(d => d.FullName, o => o.MapFrom(s => s.FullName));
+            .ForMember(d => d.FullName, o => o.MapFrom(s => s.FullName))
+            .ForMember(d => d.HasPin, o => o.MapFrom(s => !string.IsNullOrEmpty(s.PinHash)))
+            .ForMember(d => d.HasPassword, o => o.MapFrom(s => !string.IsNullOrEmpty(s.PasswordHash)));
         CreateMap<CreateStaffDto, Staff>()
             .ForMember(d => d.TenantId, o => o.Ignore())
             .ForMember(d => d.PinHash, o => o.Ignore())
