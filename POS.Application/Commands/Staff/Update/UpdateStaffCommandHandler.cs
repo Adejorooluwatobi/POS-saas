@@ -32,9 +32,16 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
             entity.PinHash = _passwordService.Hash(request.Dto.Pin);
         }
 
-        if (!string.IsNullOrWhiteSpace(request.Dto.Password))
+        if (request.Dto.Password != null)
         {
-            entity.PasswordHash = _passwordService.Hash(request.Dto.Password);
+            if (string.IsNullOrWhiteSpace(request.Dto.Password))
+            {
+                entity.PasswordHash = null;
+            }
+            else
+            {
+                entity.PasswordHash = _passwordService.Hash(request.Dto.Password);
+            }
         }
         _repository.Update(entity);
         await _uow.SaveChangesAsync(cancellationToken);
