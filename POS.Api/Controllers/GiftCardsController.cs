@@ -4,6 +4,7 @@ using POS.Application.Commands.GiftCard.Issue;
 using POS.Application.Commands.GiftCard.Redeem;
 using POS.Application.DTOs;
 using POS.Application.Queries.GiftCard.GetById;
+using POS.Application.Queries.GiftCard.GetPaged;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,6 +17,10 @@ public class GiftCardsController : ControllerBase
 {
     private readonly IMediator _mediator;
     public GiftCardsController(IMediator mediator) => _mediator = mediator;
+
+    [HttpGet]
+    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
+        => Ok(await _mediator.Send(new GetGiftCardsPagedQuery(page, size)));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
