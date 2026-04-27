@@ -3,7 +3,6 @@ using AutoMapper;
 using MediatR;
 using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace POS.Application.Commands.Product.Update;
 

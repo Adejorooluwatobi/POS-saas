@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using POS.Domain.Entities;
 using POS.Domain.Repositories;
 using POS.Infrastructure.Data;
