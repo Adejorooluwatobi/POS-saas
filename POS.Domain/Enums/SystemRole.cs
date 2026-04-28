@@ -6,5 +6,6 @@ public enum SystemRole
     TenantAdmin,
     StoreManager,
     Cashier,
-    Supervisor
+    Supervisor,
+    Manager
 }

@@ -14,7 +14,7 @@ public class JwtTokenGenerator : ITokenService
     private readonly IConfiguration _config;
     public JwtTokenGenerator(IConfiguration config) => _config = config;
 
-    public string GenerateToken(Guid id, string emailOrEmployeeNo, string role, Guid? tenantId = null, Guid? storeId = null)
+    public string GenerateToken(Guid id, string emailOrEmployeeNo, string role, string fullName, Guid? tenantId = null, Guid? storeId = null)
     {
         var secret = _config["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret missing.");
         var issuer = _config["Jwt:Issuer"];
@@ -26,6 +26,7 @@ public class JwtTokenGenerator : ITokenService
             new(JwtRegisteredClaimNames.Sub, id.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, id.ToString()),
+            new(ClaimTypes.Name, fullName),
             new("system_role", role)
         };
 

@@ -13,6 +13,7 @@ namespace POS.Test.Application;
 public class LoginPosCommandHandlerTests
 {
     private readonly Mock<IStaffRepository> _staffRepoMock;
+    private readonly Mock<IStoreRepository> _storeRepoMock;
     private readonly Mock<IPasswordService> _passwordServiceMock;
     private readonly Mock<ITokenService> _tokenServiceMock;
     private readonly LoginPosCommandHandler _handler;
@@ -20,11 +21,13 @@ public class LoginPosCommandHandlerTests
     public LoginPosCommandHandlerTests()
     {
         _staffRepoMock = new Mock<IStaffRepository>();
+        _storeRepoMock = new Mock<IStoreRepository>();
         _passwordServiceMock = new Mock<IPasswordService>();
         _tokenServiceMock = new Mock<ITokenService>();
 
         _handler = new LoginPosCommandHandler(
             _staffRepoMock.Object,
+            _storeRepoMock.Object,
             _passwordServiceMock.Object,
             _tokenServiceMock.Object
         );
@@ -60,7 +63,7 @@ public class LoginPosCommandHandlerTests
 
         _staffRepoMock.Setup(r => r.GetByEmployeeNoAsync(storeId, employeeNo)).ReturnsAsync(staff);
         _passwordServiceMock.Setup(s => s.Verify(pin, pinHash)).Returns(true);
-        _tokenServiceMock.Setup(s => s.GenerateToken(staffId, employeeNo, "Cashier", tenantId, storeId)).Returns("ValidToken");
+        _tokenServiceMock.Setup(s => s.GenerateToken(staffId, employeeNo, "Cashier", "John Doe", tenantId, storeId)).Returns("ValidToken");
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

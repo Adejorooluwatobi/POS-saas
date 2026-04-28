@@ -12,15 +12,18 @@ namespace POS.Application.Commands.Auth.LoginPos;
 public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthResponseDto>
 {
     private readonly IStaffRepository _staffRepo;
+    private readonly IStoreRepository _storeRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
 
     public LoginPosCommandHandler(
         IStaffRepository staffRepo,
+        IStoreRepository storeRepo,
         IPasswordService passwordService,
         ITokenService tokenService)
     {
         _staffRepo = staffRepo;
+        _storeRepo = storeRepo;
         _passwordService = passwordService;
         _tokenService = tokenService;
     }
@@ -35,8 +38,19 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
             throw new UnauthorizedAccessException("Invalid POS credentials or unknown Store.");
         }
 
+        if (!staff.IsActive)
+        {
+            throw new UnauthorizedAccessException("Your account has been suspended.");
+        }
+
+        var store = await _storeRepo.GetByIdAsync(request.Dto.StoreId);
+        if (store != null && !store.IsActive)
+        {
+            throw new UnauthorizedAccessException("This store is currently suspended.");
+        }
+
         var roleStr = staff.SystemRole.ToString();
-        var token = _tokenService.GenerateToken(staff.Id, staff.EmployeeNo, roleStr, staff.TenantId, staff.StoreId);
+        var token = _tokenService.GenerateToken(staff.Id, staff.EmployeeNo, roleStr, staff.FullName, staff.TenantId, staff.StoreId);
 
         return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName);
     }

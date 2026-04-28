@@ -13,15 +13,18 @@ namespace POS.Application.Commands.Auth.LoginAdmin;
 public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthResponseDto>
 {
     private readonly IStaffRepository _staffRepo;
+    private readonly IStoreRepository _storeRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
 
     public LoginAdminCommandHandler(
         IStaffRepository staffRepo,
+        IStoreRepository storeRepo,
         IPasswordService passwordService,
         ITokenService tokenService)
     {
         _staffRepo = staffRepo;
+        _storeRepo = storeRepo;
         _passwordService = passwordService;
         _tokenService = tokenService;
     }
@@ -36,6 +39,21 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
+        if (!staff.IsActive)
+        {
+            throw new UnauthorizedAccessException("Your account has been suspended. Please contact your administrator.");
+        }
+
+        // Check if store is active (if staff is assigned to one)
+        if (staff.StoreId.HasValue && staff.SystemRole != SystemRole.SuperAdmin)
+        {
+            var store = await _storeRepo.GetByIdAsync(staff.StoreId.Value);
+            if (store != null && !store.IsActive)
+            {
+                throw new UnauthorizedAccessException("Your assigned store is currently inactive/suspended.");
+            }
+        }
+
         if (staff.SystemRole == SystemRole.Cashier)
         {
             throw new UnauthorizedAccessException("Cashiers cannot login to the dashboard. Please use the POS terminal.");
@@ -47,7 +65,7 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         // SuperAdmins don't have a TenantId restriction in their token
         Guid? tokenTenantId = staff.SystemRole == SystemRole.SuperAdmin ? null : staff.TenantId;
         
-        var token = _tokenService.GenerateToken(staff.Id, staff.Email, roleStr, tokenTenantId, staff.StoreId);
+        var token = _tokenService.GenerateToken(staff.Id, staff.Email, roleStr, staff.FullName, tokenTenantId, staff.StoreId);
 
         return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName);
     }
