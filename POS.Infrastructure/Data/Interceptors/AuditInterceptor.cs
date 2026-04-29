@@ -47,8 +47,6 @@ public class AuditInterceptor : SaveChangesInterceptor
 
         foreach (var entry in context.ChangeTracker.Entries())
         {
-            // Skip AuditLog entity itself to avoid recursion
-            // Only audit entities marked with [Auditable] attribute
             if (entry.Entity is AuditLog || entry.State == EntityState.Detached || entry.State == EntityState.Unchanged)
                 continue;
 
@@ -70,6 +68,12 @@ public class AuditInterceptor : SaveChangesInterceptor
                 },
                 EntityType = entry.Entity.GetType().Name,
                 EntityId = GetPrimaryKeyValue(entry),
+                ActorMetadata = JsonDocument.Parse(JsonSerializer.Serialize(new
+                {
+                    actorId = _tenantContext.UserId,
+                    actorName = _tenantContext.UserName,
+                    actorRole = _tenantContext.SystemRole
+                })),
                 CreatedAt = DateTimeOffset.UtcNow
             };
 

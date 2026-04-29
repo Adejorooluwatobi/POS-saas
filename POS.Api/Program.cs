@@ -5,10 +5,14 @@ using POS.Infrastructure.Tenancy;
 using POS.Domain.Interfaces;
 using POS.Application;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using POS.Api.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Scalar.AspNetCore;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.OpenApi;
 
 namespace POS.Api;
 
@@ -16,11 +20,93 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        DotNetEnv.Env.TraversePath().Load();
+
         var builder = WebApplication.CreateBuilder(args);
 
+        // ── Configuration & Environment ────────────────────────────────────
+        var config = builder.Configuration;
+        var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
+            ?? config.GetConnectionString("DefaultConnection");
+
+        // Handle case where environment variable is not set and fallback is the literal placeholder
+        if (string.IsNullOrEmpty(rawConnectionString) || rawConnectionString.Contains("${DATABASE_URL}"))
+        {
+            rawConnectionString = null;
+        }
+
+        var databaseUrl = ParseDatabaseUrl(rawConnectionString);
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+            ?? config["Jwt:Secret"];
+
+        if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Contains("${JWT_SECRET}"))
+        {
+            jwtSecret = null;
+        }
+
+        // Override the configuration values for the rest of the application
+        if (!string.IsNullOrEmpty(databaseUrl))
+        {
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = databaseUrl;
+            Console.WriteLine("Database connection string resolved from environment.");
+        }
+        else
+        {
+            // Clear the placeholder if it exists to avoid Npgsql parsing errors
+            builder.Configuration["ConnectionStrings:DefaultConnection"] = "";
+            Console.WriteLine("Warning: Database connection string is missing or invalid.");
+        }
+        
+        if (!string.IsNullOrEmpty(jwtSecret))
+        {
+            builder.Configuration["Jwt:Secret"] = jwtSecret;
+        }
+
         // ── Core Services ──────────────────────────────────────────────────
-        builder.Services.AddControllers();
-        builder.Services.AddOpenApi();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer((document, context, cancellationToken) =>
+            {
+                var scheme = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Please enter token"
+                };
+
+                document.Components ??= new OpenApiComponents();
+                document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+                
+                if (!document.Components.SecuritySchemes.ContainsKey("Bearer"))
+                {
+                    document.Components.SecuritySchemes.Add("Bearer", scheme);
+                }
+
+                document.Security ??= new List<OpenApiSecurityRequirement>();
+                var requirement = new OpenApiSecurityRequirement();
+                requirement.Add(new OpenApiSecuritySchemeReference("Bearer", document), new List<string>());
+                document.Security.Add(requirement);
+
+                return Task.CompletedTask;
+            });
+        });
+        
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
+        });
         
         // ── Authentication & Authorization ─────────────────────────────────
         var secret = builder.Configuration["Jwt:Secret"] ?? "RetailOS_SuperSecretKey_BecauseThisIsDev_LengthMustBeAtLeast32Chars!";
@@ -63,28 +149,78 @@ public class Program
         builder.Services.AddDbContext<RetailOsDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString)
-                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
+                   .AddInterceptors(sp.GetRequiredService<AuditInterceptor>())
+                   .ConfigureWarnings(w =>
+                       // This warning is expected: global query filters use a runtime tenant ID
+                       // which EF Core flags as a non-deterministic model change. Intentional.
+                       w.Ignore(RelationalEventId.PendingModelChangesWarning));
+        });
+
+        // ── Forwarded Headers (For Render/Reverse Proxies) ─────────────────
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // Clear known networks/proxies so it accepts forwarded headers from Render
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
         });
 
         var app = builder.Build();
 
+        app.UseForwardedHeaders();
+
         // ── Pipeline ───────────────────────────────────────────────────────
-        if (app.Environment.IsDevelopment())
+        app.ApplyMigrations();
+
+        app.MapOpenApi();
+        app.MapScalarApiReference(options =>
         {
-            app.MapOpenApi();
-            app.MapScalarApiReference(options =>
+            options.Title = "RetailOS POS API";
+            options.Theme = ScalarTheme.DeepSpace;
+            options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
+            options.Authentication = new ScalarAuthenticationOptions
             {
-                options.Title = "RetailOS POS API";
-                options.Theme = ScalarTheme.DeepSpace;
-                options.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
-            });
-        }
+                PreferredSecuritySchemes = ["Bearer"]
+            };
+        });
 
         app.UseHttpsRedirection();
+        app.UseCors("AllowAll");
         app.UseAuthentication(); // Ensure Authentication is before Authorization
         app.UseAuthorization();
         app.MapControllers().RequireAuthorization();
 
         app.Run();
+    }
+
+    private static string? ParseDatabaseUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return null;
+
+        // If it's already a standard connection string, return as is
+        bool isUri = url.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) || 
+                     url.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase);
+
+        if (!isUri)
+            return url;
+
+        try
+        {
+            var uri = new Uri(url);
+            var userInfo = uri.UserInfo.Split(':');
+            var username = userInfo[0];
+            var password = userInfo.Length > 1 ? userInfo[1] : "";
+            var host = uri.Host;
+            var port = uri.Port > 0 ? uri.Port : 5432;
+            var database = uri.AbsolutePath.TrimStart('/');
+
+            // Render and other cloud providers often require SSL.
+            return $"Host={host};Port={port};Username={username};Password={password};Database={database};SSL Mode=Require;Trust Server Certificate=true";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing DATABASE_URL: {ex.Message}");
+            return url; // Fallback to original if parsing fails
+        }
     }
 }

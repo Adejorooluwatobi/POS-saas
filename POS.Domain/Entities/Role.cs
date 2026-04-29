@@ -13,6 +13,7 @@ public class Role : BaseEntity
     // Stored as JSONB
     public JsonDocument Permissions { get; set; } = null!;
     public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
 
     // Navigation
     public Tenant Tenant { get; set; } = null!;

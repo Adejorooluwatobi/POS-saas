@@ -35,9 +35,9 @@ public class LoginCustomerCommandHandler : IRequestHandler<LoginCustomerCommand,
 
         // Generate token explicitly marked as Consumer
         var roleStr = "Consumer";
-        var token = _tokenService.GenerateToken(customer.Id, customer.Email ?? customer.Phone ?? "unk", roleStr, customer.TenantId, null);
-
         var name = $"{customer.FirstName} {customer.LastName}".Trim();
+        var token = _tokenService.GenerateToken(customer.Id, customer.Email ?? customer.Phone ?? "unk", roleStr, name, customer.TenantId);
+
         return new AuthResponseDto(token, roleStr, customer.TenantId, name);
     }
 }

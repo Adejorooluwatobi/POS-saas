@@ -20,6 +20,7 @@ public class AuditLog : BaseEntity
     
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
+    public JsonDocument? ActorMetadata { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation

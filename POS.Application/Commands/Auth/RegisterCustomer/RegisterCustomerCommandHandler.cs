@@ -53,9 +53,9 @@ public class RegisterCustomerCommandHandler : IRequestHandler<RegisterCustomerCo
         await _uow.SaveChangesAsync(cancellationToken);
 
         var roleStr = "Consumer";
-        var token = _tokenService.GenerateToken(customer.Id, customer.Email, roleStr, customer.TenantId, null);
-
         var name = $"{customer.FirstName} {customer.LastName}".Trim();
+        var token = _tokenService.GenerateToken(customer.Id, customer.Email, roleStr, name, customer.TenantId);
+
         return new AuthResponseDto(token, roleStr, customer.TenantId, name);
     }
 }

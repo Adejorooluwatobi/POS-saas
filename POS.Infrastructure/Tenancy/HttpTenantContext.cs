@@ -10,6 +10,7 @@ public class HttpTenantContext : ITenantContext
     public Guid? TenantId { get; }
     public Guid? UserId { get; }
     public Guid? StoreId { get; }
+    public string? UserName { get; }
     public string SystemRole { get; }
 
     public HttpTenantContext(IHttpContextAccessor accessor)
@@ -26,6 +27,8 @@ public class HttpTenantContext : ITenantContext
 
         var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         UserId = userIdClaim != null ? Guid.Parse(userIdClaim) : null;
+
+        UserName = user.FindFirst(ClaimTypes.Name)?.Value;
 
         var storeIdClaim = user.FindFirst("store_id")?.Value;
         StoreId = storeIdClaim != null ? Guid.Parse(storeIdClaim) : null;

@@ -41,7 +41,9 @@ public class MappingProfile : Profile
 
         // ── Staff ─────────────────────────────────────────────────────────
         CreateMap<Staff, StaffDto>()
-            .ForMember(d => d.FullName, o => o.MapFrom(s => s.FullName));
+            .ForMember(d => d.FullName, o => o.MapFrom(s => s.FullName))
+            .ForMember(d => d.HasPin, o => o.MapFrom(s => !string.IsNullOrEmpty(s.PinHash)))
+            .ForMember(d => d.HasPassword, o => o.MapFrom(s => !string.IsNullOrEmpty(s.PasswordHash)));
         CreateMap<CreateStaffDto, Staff>()
             .ForMember(d => d.TenantId, o => o.Ignore())
             .ForMember(d => d.PinHash, o => o.Ignore())
@@ -72,7 +74,11 @@ public class MappingProfile : Profile
             .ForMember(d => d.Id, o => o.Ignore());
 
         // ── Product ───────────────────────────────────────────────────────
-        CreateMap<Product, ProductDto>();
+        CreateMap<Product, ProductDto>()
+            .ForMember(d => d.BasePrice, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.BasePrice : 0))
+            .ForMember(d => d.CostPrice, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.CostPrice : 0))
+            .ForMember(d => d.WeightGrams, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.WeightGrams : null))
+            .ForMember(d => d.UnitOfMeasure, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.UnitOfMeasure : "Each"));
         CreateMap<CreateProductDto, Product>();
         CreateMap<UpdateProductDto, Product>()
             .ForMember(d => d.Id, o => o.Ignore())

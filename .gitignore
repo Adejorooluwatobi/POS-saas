@@ -611,3 +611,4 @@ FodyWeavers.xsd
 # Custom ignores
 scratch/
 pos-erd-saas.html
+.env

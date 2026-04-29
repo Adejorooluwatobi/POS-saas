@@ -72,7 +72,7 @@ public class RegisterTenantCommandHandler : IRequestHandler<RegisterTenantComman
 
         // 4. Generate Auth Token
         var roleStr = adminStaff.SystemRole.ToString();
-        var token = _tokenService.GenerateToken(adminStaff.Id, adminStaff.Email, roleStr, tenantId, null);
+        var token = _tokenService.GenerateToken(adminStaff.Id, adminStaff.Email, roleStr, adminStaff.FullName, tenantId);
 
         return new AuthResponseDto(token, roleStr, tenantId, adminStaff.FullName);
     }

@@ -32,7 +32,7 @@ namespace POS.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_status", new[] { "open", "suspended", "closed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_plan", new[] { "starter", "pro", "enterprise" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_status", new[] { "trial", "active", "past_due", "cancelled", "suspended" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "system_role", new[] { "super_admin", "tenant_admin", "store_manager", "cashier" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "system_role", new[] { "super_admin", "tenant_admin", "store_manager", "cashier", "supervisor", "manager" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "tax_category", new[] { "standard", "zero", "exempt", "reduced" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "terminal_status", new[] { "online", "offline", "maintenance" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "transaction_status", new[] { "open", "in_progress", "payment_pending", "completed", "voided", "refunded" });
@@ -97,6 +97,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<string>("Action")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<JsonDocument>("ActorMetadata")
+                        .HasColumnType("jsonb");
 
                     b.Property<JsonDocument>("Changes")
                         .HasColumnType("jsonb");
@@ -172,12 +175,17 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Categories", (string)null);
                 });
@@ -250,6 +258,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<string>("LoyaltyCardNo")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(30)
@@ -545,12 +556,17 @@ namespace POS.Infrastructure.Migrations
                     b.Property<Guid?>("StoreId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("VariantId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("StoreId");
+
+                    b.HasIndex("TenantId");
 
                     b.HasIndex("VariantId");
 
@@ -594,6 +610,9 @@ namespace POS.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -605,6 +624,8 @@ namespace POS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Products", (string)null);
                 });
@@ -649,6 +670,9 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("UnitOfMeasure")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -669,6 +693,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("Sku")
                         .IsUnique();
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("ProductVariants", (string)null);
                 });
@@ -748,6 +774,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -759,10 +788,15 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("jsonb")
                         .HasDefaultValueSql("'{}'::jsonb");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
                         .IsUnique();
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Roles", (string)null);
                 });
@@ -842,6 +876,23 @@ namespace POS.Infrastructure.Migrations
                     b.HasIndex("TenantId", "SystemRole");
 
                     b.ToTable("Staff", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Email = "admin@retailos.com",
+                            EmployeeNo = "SYS-ADM",
+                            FirstName = "System",
+                            HiredAt = new DateOnly(2026, 1, 1),
+                            IsActive = true,
+                            LastName = "Admin",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFvn4SFv5/GxAt2+VZlbkxht0TV1NDZsRCBiFRT61dFmGmAWgtnSSrTT1q6iQElF1Q==",
+                            PinHash = "AQAAAAIAAYagAAAAEFvn4SFv5/GxAt2+VZlbkxht0TV1NDZsRCBiFRT61dFmGmAWgtnSSrTT1q6iQElF1Q==",
+                            SystemRole = "SuperAdmin",
+                            TenantId = new Guid("00000000-0000-0000-0000-000000000001")
+                        });
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Store", b =>
@@ -976,6 +1027,20 @@ namespace POS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Tenants", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            BusinessName = "RetailOS System",
+                            ContactEmail = "admin@retailos.com",
+                            Country = "Global",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            IsActive = true,
+                            IsVerified = false,
+                            Slug = "system",
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 4, 28, 0, 19, 42, 414, DateTimeKind.Unspecified).AddTicks(7760), new TimeSpan(0, 0, 0, 0, 0))
+                        });
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.TenantSubscription", b =>
@@ -1351,7 +1416,15 @@ namespace POS.Infrastructure.Migrations
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Parent");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Coupon", b =>
@@ -1455,11 +1528,19 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.PricingRule", b =>
                 {
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("POS.Domain.Entities.ProductVariant", "Variant")
                         .WithMany("PricingRules")
                         .HasForeignKey("VariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Tenant");
 
                     b.Navigation("Variant");
                 });
@@ -1471,7 +1552,15 @@ namespace POS.Infrastructure.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.ProductVariant", b =>
@@ -1482,13 +1571,32 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Product");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Promotion", b =>
                 {
                     b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Promotions")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.Role", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
