@@ -167,6 +167,8 @@ public class Program
 
         var app = builder.Build();
 
+        app.UseMiddleware<POS.Api.Middleware.ExceptionMiddleware>();
+
         app.UseForwardedHeaders();
 
         // ── Pipeline ───────────────────────────────────────────────────────
