@@ -8,6 +8,7 @@ public class TerminalDto
     public Guid StoreId { get; set; }
     public string TerminalCode { get; set; } = default!;
     public string? Label { get; set; }
+    public string? Name => Label; // frontend-friendly alias
     public string? IpAddress { get; set; }
     public TerminalStatus Status { get; set; }
     public DateTimeOffset? LastPingAt { get; set; }
