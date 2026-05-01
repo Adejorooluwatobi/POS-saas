@@ -24,6 +24,15 @@ public class CreateTerminalCommandHandler : IRequestHandler<CreateTerminalComman
     {
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.StoreId = request.StoreId;
+        
+        // Auto-generate terminal identity and pairing code
+        entity.TerminalCode = $"TRM-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        
+        // Generate a 6-digit pairing code
+        var random = new Random();
+        entity.PairingCode = random.Next(100000, 999999).ToString();
+        entity.PairingCodeExpiresAt = DateTimeOffset.UtcNow.AddHours(24);
+        
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<TerminalDto>(entity);
