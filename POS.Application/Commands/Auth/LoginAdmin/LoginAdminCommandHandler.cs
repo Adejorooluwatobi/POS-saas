@@ -54,11 +54,6 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
             }
         }
 
-        if (staff.SystemRole == SystemRole.Cashier)
-        {
-            throw new UnauthorizedAccessException("Cashiers cannot login to the dashboard. Please use the POS terminal.");
-        }
-
         // 2. Generate token
         var roleStr = staff.SystemRole.ToString();
         
@@ -67,6 +62,6 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         
         var token = _tokenService.GenerateToken(staff.Id, staff.Email, roleStr, staff.FullName, tokenTenantId, staff.StoreId);
 
-        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName);
+        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName, staff.Id, staff.Email);
     }
 }

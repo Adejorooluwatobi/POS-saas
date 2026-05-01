@@ -33,35 +33,50 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
         var entity = await _repository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Staff {request.Id} not found.");
 
-        // Hierarchical Role Validation
+        // Self-Update & Role Hierarchy Validation
         var creatorRole = _tenantContext.SystemRole;
         var targetRole = request.Dto.SystemRole;
 
-        if (creatorRole == "Manager")
+        if (_tenantContext.UserId == entity.Id)
         {
-            // General Managers cannot modify Admins or other General Managers
-            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager || 
-                entity.SystemRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager)
-                throw new UnauthorizedAccessException("General Managers cannot manage Admin or other General Manager roles.");
+            // Self-update: Prevent non-admins from promoting themselves
+            if (creatorRole != "SuperAdmin" && creatorRole != "TenantAdmin" && creatorRole != "Manager")
+            {
+                if (targetRole != entity.SystemRole || request.Dto.StoreId != entity.StoreId || request.Dto.IsActive != entity.IsActive)
+                {
+                    throw new UnauthorizedAccessException("You cannot change your own role, store assignment, or status.");
+                }
+            }
         }
-        else if (creatorRole == "StoreManager")
+        else
         {
-            // Store Managers can only modify staff assigned to their store
-            if (entity.StoreId != _tenantContext.StoreId)
-                throw new UnauthorizedAccessException("You can only manage staff within your assigned store.");
+            // Hierarchical Validation for managing others
+            if (creatorRole == "Manager")
+            {
+                // General Managers cannot modify Admins or other General Managers
+                if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager || 
+                    entity.SystemRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager)
+                    throw new UnauthorizedAccessException("General Managers cannot manage Admin or other General Manager roles.");
+            }
+            else if (creatorRole == "StoreManager")
+            {
+                // Store Managers can only modify staff assigned to their store
+                if (entity.StoreId != _tenantContext.StoreId)
+                    throw new UnauthorizedAccessException("You can only manage staff within your assigned store.");
 
-            // Store Managers can only modify/set roles to Supervisor or Cashier
-            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager || 
-                entity.SystemRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager)
-                throw new UnauthorizedAccessException("Store Managers can only manage Cashiers or Supervisors.");
+                // Store Managers can only modify/set roles to Supervisor or Cashier
+                if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager || 
+                    entity.SystemRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager)
+                    throw new UnauthorizedAccessException("Store Managers can only manage Cashiers or Supervisors.");
 
-            // Prevent reassigning staff to other stores
-            if (request.Dto.StoreId != _tenantContext.StoreId)
-                throw new UnauthorizedAccessException("You cannot reassign staff to other stores.");
-        }
-        else if (creatorRole == "Supervisor")
-        {
-            throw new UnauthorizedAccessException("Supervisors do not have permission to edit staff details.");
+                // Prevent reassigning staff to other stores
+                if (request.Dto.StoreId != _tenantContext.StoreId)
+                    throw new UnauthorizedAccessException("You cannot reassign staff to other stores.");
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("You do not have permission to manage other staff members.");
+            }
         }
 
         _mapper.Map(request.Dto, entity);
