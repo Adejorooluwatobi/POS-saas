@@ -13,6 +13,12 @@ public class Terminal : BaseEntity
     public string? IpAddress { get; set; }
     public TerminalStatus Status { get; set; } = TerminalStatus.Offline;
     public DateTimeOffset? LastPingAt { get; set; }
+    
+    // Device Pairing
+    public string? PairingCode { get; set; }
+    public string? DeviceToken { get; set; }
+    public DateTimeOffset? PairingCodeExpiresAt { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation

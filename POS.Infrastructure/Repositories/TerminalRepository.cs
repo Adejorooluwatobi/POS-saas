@@ -11,4 +11,7 @@ public class TerminalRepository : GenericRepository<Terminal>, ITerminalReposito
 
     public async Task<IEnumerable<Terminal>> GetByStoreAsync(Guid storeId) =>
         await _dbSet.Where(t => t.StoreId == storeId).ToListAsync();
+
+    public async Task<Terminal?> GetByPairingCodeAsync(string pairingCode) =>
+        await _dbSet.FirstOrDefaultAsync(t => t.PairingCode == pairingCode);
 }
