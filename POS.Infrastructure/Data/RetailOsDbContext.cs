@@ -59,8 +59,8 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<Tenant>().HasQueryFilter(t => _tenant.TenantId == null || t.Id == _tenant.TenantId);
 
         // Core tenant-scoped entities
-        modelBuilder.Entity<Store>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Staff>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<Store>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.Id == _tenant.StoreId));
+        modelBuilder.Entity<Staff>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Customer>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Product>().HasQueryFilter(p => _tenant.TenantId == null || p.TenantId == _tenant.TenantId);
@@ -73,16 +73,16 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<TenantSubscription>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
 
         // Indirectly scoped entities - filtered via navigation paths
-        modelBuilder.Entity<Terminal>().HasQueryFilter(t => _tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<Terminal>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
         
-        modelBuilder.Entity<Inventory>().HasQueryFilter(i => _tenant.TenantId == null || i.Store.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Transaction>().HasQueryFilter(t => _tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<TransactionItem>().HasQueryFilter(i => _tenant.TenantId == null || i.Transaction.Store.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Payment>().HasQueryFilter(p => _tenant.TenantId == null || p.Transaction.Store.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<AppliedDiscount>().HasQueryFilter(d => _tenant.TenantId == null || d.Transaction.Store.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<Inventory>().HasQueryFilter(i => (_tenant.TenantId == null || i.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<Transaction>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<TransactionItem>().HasQueryFilter(i => (_tenant.TenantId == null || i.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.Transaction.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<Payment>().HasQueryFilter(p => (_tenant.TenantId == null || p.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || p.Transaction.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<AppliedDiscount>().HasQueryFilter(d => (_tenant.TenantId == null || d.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || d.Transaction.StoreId == _tenant.StoreId));
         
-        modelBuilder.Entity<EodReport>().HasQueryFilter(e => _tenant.TenantId == null || e.Store.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<TillSession>().HasQueryFilter(s => _tenant.TenantId == null || s.Staff.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<EodReport>().HasQueryFilter(e => (_tenant.TenantId == null || e.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || e.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<TillSession>().HasQueryFilter(s => (_tenant.TenantId == null || s.Staff.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.Terminal.StoreId == _tenant.StoreId));
         
         modelBuilder.Entity<LoyaltyLedgerEntry>().HasQueryFilter(l => _tenant.TenantId == null || l.Customer.TenantId == _tenant.TenantId);
         

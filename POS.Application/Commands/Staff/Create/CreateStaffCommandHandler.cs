@@ -3,6 +3,7 @@ using MediatR;
 using POS.Application.DTOs;
 using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
+using POS.Domain.Enums;
 using Entity = POS.Domain.Entities.Staff;
 
 namespace POS.Application.Commands.Staff.Create;
@@ -28,6 +29,27 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
 
     public async Task<StaffDto> Handle(CreateStaffCommand request, CancellationToken cancellationToken)
     {
+        // Role Hierarchy Validation
+        var creatorRole = _tenantContext.SystemRole;
+        var targetRole = request.Dto.SystemRole;
+
+        if (creatorRole == "Manager")
+        {
+            // Manager can only create StoreManager, Cashier, Supervisor
+            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager)
+                throw new UnauthorizedAccessException("General Managers cannot create Admin or other Manager roles.");
+        }
+        else if (creatorRole == "StoreManager")
+        {
+            // StoreManager can only create Cashier or Supervisor
+            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager)
+                throw new UnauthorizedAccessException("Store Managers can only create Cashiers or Supervisors.");
+        }
+        else if (creatorRole != "SuperAdmin" && creatorRole != "TenantAdmin")
+        {
+            throw new UnauthorizedAccessException("You do not have permission to create staff.");
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = _tenantContext.TenantId!.Value;
         entity.PinHash = _passwordService.Hash(request.Dto.Pin);

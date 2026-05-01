@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
+using POS.Domain.Enums;
 
 namespace POS.Application.Commands.Staff.Update;
 
@@ -32,19 +33,35 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
         var entity = await _repository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Staff {request.Id} not found.");
 
-        // Store Scoped Permission Check
-        if (_tenantContext.SystemRole == "Supervisor" || _tenantContext.SystemRole == "Manager")
-        {
-            if (entity.StoreId != _tenantContext.StoreId)
-            {
-                throw new UnauthorizedAccessException("You can only manage staff within your assigned store.");
-            }
+        // Hierarchical Role Validation
+        var creatorRole = _tenantContext.SystemRole;
+        var targetRole = request.Dto.SystemRole;
 
-            // Prevent changing the StoreId to something else
+        if (creatorRole == "Manager")
+        {
+            // General Managers cannot modify Admins or other General Managers
+            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager || 
+                entity.SystemRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager)
+                throw new UnauthorizedAccessException("General Managers cannot manage Admin or other General Manager roles.");
+        }
+        else if (creatorRole == "StoreManager")
+        {
+            // Store Managers can only modify staff assigned to their store
+            if (entity.StoreId != _tenantContext.StoreId)
+                throw new UnauthorizedAccessException("You can only manage staff within your assigned store.");
+
+            // Store Managers can only modify/set roles to Supervisor or Cashier
+            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager || 
+                entity.SystemRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager)
+                throw new UnauthorizedAccessException("Store Managers can only manage Cashiers or Supervisors.");
+
+            // Prevent reassigning staff to other stores
             if (request.Dto.StoreId != _tenantContext.StoreId)
-            {
                 throw new UnauthorizedAccessException("You cannot reassign staff to other stores.");
-            }
+        }
+        else if (creatorRole == "Supervisor")
+        {
+            throw new UnauthorizedAccessException("Supervisors do not have permission to edit staff details.");
         }
 
         _mapper.Map(request.Dto, entity);
