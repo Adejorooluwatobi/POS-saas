@@ -171,7 +171,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.AppliedDiscounts, o => o.Ignore());
 
         // ── Terminal ──────────────────────────────────────────────────────
-        CreateMap<Terminal, TerminalDto>();
+        CreateMap<Terminal, TerminalDto>()
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store.Name));
         CreateMap<CreateTerminalDto, Terminal>()
             .ForMember(d => d.TerminalCode, o => o.Ignore())
             .ForMember(d => d.StoreId, o => o.Ignore())

@@ -12,17 +12,19 @@ namespace POS.Api.Controllers;
 
 [ApiController]
 [Route("api/staff")]
-[Authorize(Policy = "AdminOnly")]
+[Authorize]
 public class StaffController : ControllerBase
 {
     private readonly IMediator _mediator;
     public StaffController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
+    [Authorize(Policy = "StaffOnly")]
     public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
         => Ok(await _mediator.Send(new GetStaffsPagedQuery(page, size)));
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "StaffOnly")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetStaffByIdQuery(id));
@@ -30,6 +32,7 @@ public class StaffController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateStaffDto dto)
     {
         var result = await _mediator.Send(new CreateStaffCommand(dto));
@@ -44,6 +47,7 @@ public class StaffController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteStaffCommand(id));
