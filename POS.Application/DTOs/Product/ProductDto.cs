@@ -11,6 +11,7 @@ public class ProductDto
     public string? Brand { get; set; }
     public string? Description { get; set; }
     public TaxCategory TaxCategory { get; set; }
+    public decimal TaxRate { get; set; }
     public bool IsActive { get; set; }
     public decimal BasePrice { get; set; }
     public decimal CostPrice { get; set; }

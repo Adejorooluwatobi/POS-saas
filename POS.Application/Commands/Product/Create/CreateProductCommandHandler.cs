@@ -49,7 +49,7 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
             TenantId = tenantId.Value,
             ProductId = entity.Id,
             Sku = entity.MasterSku,
-            Barcode = entity.MasterSku, // Default to SKU
+            Barcode = request.Dto.Barcode ?? entity.MasterSku, // Use provided barcode or default to SKU
             BasePrice = request.Dto.SellingPrice,
             CostPrice = request.Dto.CostPrice,
             WeightGrams = request.Dto.WeightGrams,
