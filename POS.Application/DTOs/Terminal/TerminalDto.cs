@@ -13,6 +13,7 @@ public class TerminalDto
     public TerminalStatus Status { get; set; }
     public DateTimeOffset? LastPingAt { get; set; }
     public string? PairingCode { get; set; }
+    public string StoreName { get; set; } = default!;
     public DateTimeOffset CreatedAt { get; set; }
 }
 
