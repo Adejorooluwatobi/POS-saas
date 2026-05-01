@@ -6,6 +6,7 @@ using POS.Application.Commands.Terminal.Delete;
 using POS.Application.Commands.Terminal.Update;
 using POS.Application.DTOs;
 using POS.Application.Commands.Terminal.Pair;
+using POS.Application.Queries.Terminal.GetAll;
 using POS.Application.Queries.Terminal.GetById;
 using POS.Application.Queries.Terminal.GetByStore;
 
@@ -18,6 +19,11 @@ public class TerminalsController : ControllerBase
 {
     private readonly IMediator _mediator;
     public TerminalsController(IMediator mediator) => _mediator = mediator;
+
+    /// <summary>Lists all terminals for the current tenant with pagination.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Get([FromQuery] int page = 1, [FromQuery] int size = 20)
+        => Ok(await _mediator.Send(new GetAllTerminalsQuery(page, size)));
 
     /// <summary>Lists all terminals belonging to a specific store.</summary>
     [HttpGet("by-store/{storeId:guid}")]

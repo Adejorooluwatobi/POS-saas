@@ -173,13 +173,20 @@ public class MappingProfile : Profile
         // ── Terminal ──────────────────────────────────────────────────────
         CreateMap<Terminal, TerminalDto>();
         CreateMap<CreateTerminalDto, Terminal>()
+            .ForMember(d => d.TerminalCode, o => o.Ignore())
             .ForMember(d => d.StoreId, o => o.Ignore())
             .ForMember(d => d.Status, o => o.Ignore())
-            .ForMember(d => d.LastPingAt, o => o.Ignore());
+            .ForMember(d => d.LastPingAt, o => o.Ignore())
+            .ForMember(d => d.PairingCode, o => o.Ignore())
+            .ForMember(d => d.DeviceToken, o => o.Ignore())
+            .ForMember(d => d.PairingCodeExpiresAt, o => o.Ignore());
         CreateMap<UpdateTerminalDto, Terminal>()
             .ForMember(d => d.Id, o => o.Ignore())
             .ForMember(d => d.StoreId, o => o.Ignore())
-            .ForMember(d => d.TerminalCode, o => o.Ignore());
+            .ForMember(d => d.TerminalCode, o => o.Ignore())
+            .ForMember(d => d.PairingCode, o => o.Ignore())
+            .ForMember(d => d.DeviceToken, o => o.Ignore())
+            .ForMember(d => d.PairingCodeExpiresAt, o => o.Ignore());
 
         // ── Coupon ────────────────────────────────────────────────────────
         CreateMap<Coupon, CouponDto>();
