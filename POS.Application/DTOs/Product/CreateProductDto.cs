@@ -11,6 +11,7 @@ public class CreateProductDto
     public string? Brand { get; set; }
     public string? Description { get; set; }
     public TaxCategory TaxCategory { get; set; } = TaxCategory.Standard;
+    public decimal TaxRate { get; set; } = 7.5m;
     public decimal CostPrice { get; set; }
     public decimal SellingPrice { get; set; }
     public decimal? WeightGrams { get; set; }

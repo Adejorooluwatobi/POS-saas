@@ -10,6 +10,7 @@ public class UpdateProductDto
     public string? Brand { get; set; }
     public string? Description { get; set; }
     public TaxCategory TaxCategory { get; set; }
+    public decimal TaxRate { get; set; }
     public decimal CostPrice { get; set; }
     public decimal SellingPrice { get; set; }
     public decimal? WeightGrams { get; set; }
