@@ -15,5 +15,6 @@ public class CreateProductDto
     public decimal SellingPrice { get; set; }
     public decimal? WeightGrams { get; set; }
     public string? UnitOfMeasure { get; set; } = "Each";
+    public string? Barcode { get; set; }
     public bool IsActive { get; set; } = true;
 }
