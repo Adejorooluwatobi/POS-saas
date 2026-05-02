@@ -40,17 +40,31 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
         var entity = await _repository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Product {request.Id} not found.");
 
-        // 1. Update Core Product (Global)
-        _mapper.Map(request.Dto, entity);
-        _repository.Update(entity);
+        // 1. Determine if user is a General (can edit globally) or Store-scoped
+        bool isGeneral = _tenantContext.SystemRole is "SuperAdmin" or "TenantAdmin" or "Manager";
+        var targetStoreIds = request.Dto.TargetStoreIds ?? new List<Guid>();
+
+        if (!isGeneral && _tenantContext.StoreId.HasValue)
+        {
+            // Force Store Managers/Supervisors to only update their store override
+            if (!targetStoreIds.Contains(_tenantContext.StoreId.Value))
+                targetStoreIds.Add(_tenantContext.StoreId.Value);
+        }
+
+        // 2. Update Core Product (Global) - Only allowed for Generals
+        if (isGeneral)
+        {
+            _mapper.Map(request.Dto, entity);
+            _repository.Update(entity);
+        }
 
         var variants = await _variantRepository.GetByProductIdAsync(request.Id);
         var defaultVariant = variants.FirstOrDefault();
 
-        // 2. Handle Store-Specific Overrides (If TargetStoreIds provided)
-        if (request.Dto.TargetStoreIds != null && request.Dto.TargetStoreIds.Any())
+        // 3. Handle Store-Specific Overrides
+        if (targetStoreIds.Any())
         {
-            foreach (var storeId in request.Dto.TargetStoreIds)
+            foreach (var storeId in targetStoreIds)
             {
                 var @override = await _overrideRepository.GetByStoreAndProductAsync(storeId, entity.Id);
                 if (@override == null)
@@ -73,7 +87,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
                 }
             }
         }
-        else
+        else if (isGeneral)
         {
             // If no targeted stores, update the default variant (Global Price)
             if (defaultVariant != null)
