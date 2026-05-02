@@ -11,16 +11,22 @@ namespace POS.Application.Commands.Staff.Create;
 public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, StaffDto>
 {
     private readonly IStaffRepository _repository;
+    private readonly IRoleRepository _roleRepository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
     private readonly ITenantContext _tenantContext;
     private readonly IPasswordService _passwordService;
 
     public CreateStaffCommandHandler(
-        IStaffRepository repository, IUnitOfWork uow, IMapper mapper,
-        ITenantContext tenantContext, IPasswordService passwordService)
+        IStaffRepository repository, 
+        IRoleRepository roleRepository,
+        IUnitOfWork uow, 
+        IMapper mapper,
+        ITenantContext tenantContext, 
+        IPasswordService passwordService)
     {
         _repository = repository;
+        _roleRepository = roleRepository;
         _uow = uow;
         _mapper = mapper;
         _tenantContext = tenantContext;
@@ -31,9 +37,23 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
     {
         var entity = _mapper.Map<Entity>(request.Dto);
 
-        // Role Hierarchy Validation
+        // 1. Resolve SystemRole from RoleId if provided
+        if (request.Dto.RoleId.HasValue)
+        {
+            var role = await _roleRepository.GetByIdAsync(request.Dto.RoleId.Value);
+            if (role != null)
+            {
+                entity.SystemRole = role.SystemRole;
+            }
+        }
+        else
+        {
+            entity.SystemRole = request.Dto.SystemRole;
+        }
+
+        // 2. Role Hierarchy Validation
         var creatorRole = _tenantContext.SystemRole;
-        var targetRole = request.Dto.SystemRole;
+        var targetRole = entity.SystemRole;
 
         if (creatorRole == "Manager")
         {
