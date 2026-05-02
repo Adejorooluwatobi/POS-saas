@@ -42,7 +42,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
 
         // 1. Determine if user is a General (can edit globally) or Store-scoped
         bool isGeneral = _tenantContext.SystemRole is "SuperAdmin" or "TenantAdmin" or "Manager";
-        var targetStoreIds = request.Dto.TargetStoreIds ?? new List<Guid>();
+        var targetStoreIds = (request.Dto.TargetStoreIds ?? new List<Guid>()).Distinct().ToList();
 
         if (!isGeneral && _tenantContext.StoreId.HasValue)
         {
@@ -75,7 +75,8 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
                         StoreId = storeId,
                         ProductId = entity.Id,
                         Price = request.Dto.SellingPrice,
-                        IsActive = request.Dto.IsActive
+                        IsActive = request.Dto.IsActive,
+                        ModifiedBy = _tenantContext.UserName
                     };
                     await _overrideRepository.AddAsync(@override);
                 }
@@ -83,6 +84,7 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
                 {
                     @override.Price = request.Dto.SellingPrice;
                     @override.IsActive = request.Dto.IsActive;
+                    @override.ModifiedBy = _tenantContext.UserName;
                     _overrideRepository.Update(@override);
                 }
             }
