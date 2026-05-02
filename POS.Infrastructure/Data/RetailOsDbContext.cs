@@ -46,6 +46,7 @@ public class RetailOsDbContext : DbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<EodReport> EodReports => Set<EodReport>();
+    public DbSet<StoreProductOverride> StoreProductOverrides => Set<StoreProductOverride>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,6 +72,7 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<GiftCard>().HasQueryFilter(g => _tenant.TenantId == null || g.TenantId == _tenant.TenantId);
         modelBuilder.Entity<AuditLog>().HasQueryFilter(a => _tenant.TenantId == null || a.TenantId == _tenant.TenantId);
         modelBuilder.Entity<TenantSubscription>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<StoreProductOverride>().HasQueryFilter(o => (_tenant.TenantId == null || o.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || o.StoreId == _tenant.StoreId));
 
         // Indirectly scoped entities - filtered via navigation paths
         modelBuilder.Entity<Terminal>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
