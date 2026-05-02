@@ -25,6 +25,7 @@ public class ProductVariant : BaseEntity
     // Navigation
     public Tenant Tenant { get; set; } = null!;
     public Product Product { get; set; } = null!;
+    public ICollection<ProductBarcode> Barcodes { get; set; } = [];
     public ICollection<Inventory> Inventories { get; set; } = [];
     public ICollection<PricingRule> PricingRules { get; set; } = [];
     public ICollection<TransactionItem> TransactionItems { get; set; } = [];

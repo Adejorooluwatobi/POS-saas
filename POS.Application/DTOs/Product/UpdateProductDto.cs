@@ -16,4 +16,8 @@ public class UpdateProductDto
     public decimal? WeightGrams { get; set; }
     public string? UnitOfMeasure { get; set; }
     public bool IsActive { get; set; }
+    
+    // Advanced Store Scoping & Multi-Barcoding
+    public List<Guid>? TargetStoreIds { get; set; }
+    public List<string>? Barcodes { get; set; }
 }

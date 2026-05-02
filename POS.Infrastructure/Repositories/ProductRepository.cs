@@ -15,6 +15,7 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
     {
         return await _context.Products
             .Include(p => p.Variants)
+                .ThenInclude(v => v.Barcodes)
             .ToListAsync();
     }
 
@@ -22,12 +23,13 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
     {
         return await _context.Products
             .Include(p => p.Variants)
+                .ThenInclude(v => v.Barcodes)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public override async Task<POS.Domain.Common.PagedResult<Product>> GetPagedAsync(int pageNumber, int pageSize)
     {
-        var query = _context.Products.Include(p => p.Variants);
+        var query = _context.Products.Include(p => p.Variants).ThenInclude(v => v.Barcodes);
         var count = await query.CountAsync();
         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 
