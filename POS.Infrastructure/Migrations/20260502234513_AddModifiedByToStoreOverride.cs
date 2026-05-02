@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -27,6 +27,16 @@ namespace POS.Infrastructure.Migrations
                 keyValue: new Guid("00000000-0000-0000-0000-000000000001"),
                 column: "UpdatedAt",
                 value: new DateTimeOffset(new DateTime(2026, 5, 2, 23, 45, 7, 709, DateTimeKind.Unspecified).AddTicks(2253), new TimeSpan(0, 0, 0, 0, 0)));
+
+            // Clean up duplicates before creating unique index
+            migrationBuilder.Sql(@"
+                DELETE FROM ""StoreProductOverrides""
+                WHERE ""Id"" NOT IN (
+                    SELECT MIN(""Id"")
+                    FROM ""StoreProductOverrides""
+                    GROUP BY ""StoreId"", ""ProductId""
+                );
+            ");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StoreProductOverrides_StoreId_ProductId",
