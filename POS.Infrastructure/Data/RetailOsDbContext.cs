@@ -65,7 +65,7 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<Staff>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Customer>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Product>().HasQueryFilter(p => _tenant.TenantId == null || p.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<Product>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId || _tenant.SystemRole == "SuperAdmin" || _tenant.SystemRole == "TenantAdmin" || _tenant.SystemRole == "Manager"));
         modelBuilder.Entity<ProductVariant>().HasQueryFilter(v => _tenant.TenantId == null || v.TenantId == _tenant.TenantId);
         modelBuilder.Entity<PricingRule>().HasQueryFilter(p => _tenant.TenantId == null || p.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Role>().HasQueryFilter(r => _tenant.TenantId == null || r.TenantId == _tenant.TenantId);
