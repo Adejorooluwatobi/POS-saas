@@ -30,4 +30,5 @@ public class StoreProductOverrideDto
     public Guid StoreId { get; set; }
     public decimal Price { get; set; }
     public bool IsActive { get; set; }
+    public string? ModifiedBy { get; set; }
 }
