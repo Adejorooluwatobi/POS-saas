@@ -55,7 +55,11 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
         var creatorRole = _tenantContext.SystemRole;
         var targetRole = entity.SystemRole;
 
-        if (creatorRole == "Manager")
+        if (creatorRole is "SuperAdmin" or "TenantAdmin")
+        {
+            // Admins can create any role (hierarchy validation still applies if needed, but usually Admins are top-level)
+        }
+        else if (creatorRole == "Manager")
         {
             // Manager can only create StoreManager, Cashier, Supervisor
             if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager)
@@ -79,7 +83,7 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
             // Force StoreId to match creator's
             entity.StoreId = _tenantContext.StoreId;
         }
-        else if (creatorRole != "SuperAdmin" && creatorRole != "TenantAdmin")
+        else
         {
             throw new UnauthorizedAccessException("You do not have permission to create staff.");
         }

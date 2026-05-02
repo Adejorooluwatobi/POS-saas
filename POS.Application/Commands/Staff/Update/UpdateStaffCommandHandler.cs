@@ -64,7 +64,11 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
         else
         {
             // Hierarchical Validation for managing others
-            if (creatorRole == "Manager")
+            if (creatorRole is "SuperAdmin" or "TenantAdmin")
+            {
+                // Admins have full access to manage staff within their tenant
+            }
+            else if (creatorRole == "Manager")
             {
                 // General Managers cannot modify Admins or other General Managers
                 if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.Manager || 
