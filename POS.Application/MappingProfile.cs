@@ -79,7 +79,9 @@ public class MappingProfile : Profile
             .ForMember(d => d.CostPrice, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.CostPrice : 0))
             .ForMember(d => d.WeightGrams, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.WeightGrams : null))
             .ForMember(d => d.UnitOfMeasure, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.UnitOfMeasure : "Each"))
-            .ForMember(d => d.Barcodes, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.Barcodes.Select(b => b.BarcodeValue).ToList() : new List<string>()));
+            .ForMember(d => d.Barcodes, o => o.MapFrom(s => s.Variants.FirstOrDefault() != null ? s.Variants.FirstOrDefault()!.Barcodes.Select(b => b.BarcodeValue).ToList() : new List<string>()))
+            .ForMember(d => d.StoreOverrides, o => o.MapFrom(s => s.StoreOverrides));
+        CreateMap<StoreProductOverride, StoreProductOverrideDto>();
         CreateMap<CreateProductDto, Product>();
         CreateMap<UpdateProductDto, Product>()
             .ForMember(d => d.Id, o => o.Ignore())

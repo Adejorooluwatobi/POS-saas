@@ -21,4 +21,13 @@ public class ProductDto
     public DateTimeOffset UpdatedAt { get; set; }
     public List<string> Barcodes { get; set; } = [];
     public Guid? StoreId { get; set; }
+    public List<StoreProductOverrideDto> StoreOverrides { get; set; } = [];
+}
+
+public class StoreProductOverrideDto
+{
+    public Guid Id { get; set; }
+    public Guid StoreId { get; set; }
+    public decimal Price { get; set; }
+    public bool IsActive { get; set; }
 }

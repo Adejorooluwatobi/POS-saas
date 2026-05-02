@@ -22,4 +22,5 @@ public class Product : AuditableEntity
     public Tenant Tenant { get; set; } = null!;
     public Category? Category { get; set; }
     public ICollection<ProductVariant> Variants { get; set; } = [];
+    public ICollection<StoreProductOverride> StoreOverrides { get; set; } = [];
 }
