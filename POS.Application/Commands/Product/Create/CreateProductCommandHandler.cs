@@ -40,6 +40,7 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = tenantId.Value;
+        entity.StoreId = _tenantContext.StoreId;
 
         await _repository.AddAsync(entity);
         

@@ -29,6 +29,8 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
 
     public async Task<StaffDto> Handle(CreateStaffCommand request, CancellationToken cancellationToken)
     {
+        var entity = _mapper.Map<Entity>(request.Dto);
+
         // Role Hierarchy Validation
         var creatorRole = _tenantContext.SystemRole;
         var targetRole = request.Dto.SystemRole;
@@ -42,15 +44,26 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
         else if (creatorRole == "StoreManager")
         {
             // StoreManager can only create Cashier or Supervisor
-            if (targetRole is SystemRole.SuperAdmin or SystemRole.TenantAdmin or SystemRole.StoreManager or SystemRole.Manager)
+            if (targetRole is not (SystemRole.Cashier or SystemRole.Supervisor))
                 throw new UnauthorizedAccessException("Store Managers can only create Cashiers or Supervisors.");
+            
+            // Force StoreId to match creator's
+            entity.StoreId = _tenantContext.StoreId;
+        }
+        else if (creatorRole == "Supervisor")
+        {
+            // Supervisor can only create Cashier
+            if (targetRole is not SystemRole.Cashier)
+                throw new UnauthorizedAccessException("Supervisors can only create Cashiers.");
+            
+            // Force StoreId to match creator's
+            entity.StoreId = _tenantContext.StoreId;
         }
         else if (creatorRole != "SuperAdmin" && creatorRole != "TenantAdmin")
         {
             throw new UnauthorizedAccessException("You do not have permission to create staff.");
         }
 
-        var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = _tenantContext.TenantId!.Value;
         entity.PinHash = _passwordService.Hash(request.Dto.Pin);
 

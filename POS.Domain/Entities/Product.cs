@@ -8,6 +8,7 @@ namespace POS.Domain.Entities;
 public class Product : AuditableEntity
 {
     public required Guid TenantId { get; set; }
+    public Guid? StoreId { get; set; }
     public Guid? CategoryId { get; set; }
     public required string MasterSku { get; set; }
     public required string Name { get; set; }
