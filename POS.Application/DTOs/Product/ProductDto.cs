@@ -19,4 +19,6 @@ public class ProductDto
     public string? UnitOfMeasure { get; set; } = "Each";
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+    public List<string> Barcodes { get; set; } = [];
+    public Guid? StoreId { get; set; }
 }

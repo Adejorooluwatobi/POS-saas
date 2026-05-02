@@ -38,6 +38,8 @@ public static class DependencyInjection
         services.AddScoped<IGiftCardRepository, GiftCardRepository>();
         services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+        services.AddScoped<IStoreProductOverrideRepository, StoreProductOverrideRepository>();
+        services.AddScoped<IProductBarcodeRepository, ProductBarcodeRepository>();
 
         return services;
     }
