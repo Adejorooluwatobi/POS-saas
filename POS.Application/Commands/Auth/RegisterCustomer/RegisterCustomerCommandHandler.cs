@@ -56,6 +56,6 @@ public class RegisterCustomerCommandHandler : IRequestHandler<RegisterCustomerCo
         var name = $"{customer.FirstName} {customer.LastName}".Trim();
         var token = _tokenService.GenerateToken(customer.Id, customer.Email, roleStr, name, customer.TenantId);
 
-        return new AuthResponseDto(token, roleStr, customer.TenantId, name, customer.Id, customer.Email ?? "");
+        return new AuthResponseDto(token, roleStr, customer.TenantId, name, customer.Id, customer.Email ?? "", null);
     }
 }
