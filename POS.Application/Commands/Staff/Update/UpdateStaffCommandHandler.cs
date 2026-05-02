@@ -9,6 +9,7 @@ namespace POS.Application.Commands.Staff.Update;
 public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
 {
     private readonly IStaffRepository _repository;
+    private readonly IRoleRepository _roleRepository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
     private readonly IPasswordService _passwordService;
@@ -16,12 +17,14 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
 
     public UpdateStaffCommandHandler(
         IStaffRepository repository, 
+        IRoleRepository roleRepository,
         IUnitOfWork uow, 
         IMapper mapper, 
         IPasswordService passwordService,
         ITenantContext tenantContext)
     {
         _repository = repository;
+        _roleRepository = roleRepository;
         _uow = uow;
         _mapper = mapper;
         _passwordService = passwordService;
@@ -33,9 +36,19 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
         var entity = await _repository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Staff {request.Id} not found.");
 
-        // Self-Update & Role Hierarchy Validation
-        var creatorRole = _tenantContext.SystemRole;
+        // 1. Resolve SystemRole from RoleId if provided
         var targetRole = request.Dto.SystemRole;
+        if (request.Dto.RoleId.HasValue)
+        {
+            var role = await _roleRepository.GetByIdAsync(request.Dto.RoleId.Value);
+            if (role != null)
+            {
+                targetRole = role.SystemRole;
+            }
+        }
+
+        // 2. Self-Update & Role Hierarchy Validation
+        var creatorRole = _tenantContext.SystemRole;
 
         if (_tenantContext.UserId == entity.Id)
         {
@@ -80,6 +93,7 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
         }
 
         _mapper.Map(request.Dto, entity);
+        entity.SystemRole = targetRole;
 
         if (!string.IsNullOrWhiteSpace(request.Dto.Pin))
         {
