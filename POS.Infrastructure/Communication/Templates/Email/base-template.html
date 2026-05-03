@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{Subject}}</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .header { background: #0F172A; padding: 32px; text-align: center; }
+        .header img { width: 150px; }
+        .content { padding: 40px; color: #1E293B; line-height: 1.6; }
+        .footer { background: #F1F5F9; padding: 24px; text-align: center; color: #64748B; font-size: 12px; }
+        .btn { display: inline-block; padding: 12px 24px; background: #3B82F6; color: #FFFFFF; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 20px; }
+        .summary-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .summary-label { color: #64748B; font-weight: 500; }
+        .summary-value { color: #0F172A; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 1px;">RetailOS</h1>
+        </div>
+        <div class="content">
+            <h2 style="margin-top: 0;">{{Title}}</h2>
+            <p>{{Message}}</p>
+            
+            {{Content}}
+
+            <a href="{{ActionUrl}}" class="btn">{{ActionText}}</a>
+        </div>
+        <div class="footer">
+            <p>&copy; {{Year}} RetailOS Inventory Management. All rights reserved.</p>
+            <p>123 Enterprise Way, Tech City</p>
+        </div>
+    </div>
+</body>
+</html>

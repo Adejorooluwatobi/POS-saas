@@ -48,6 +48,10 @@ public class RetailOsDbContext : DbContext
     public DbSet<EodReport> EodReports => Set<EodReport>();
     public DbSet<StoreProductOverride> StoreProductOverrides => Set<StoreProductOverride>();
     public DbSet<ProductBarcode> ProductBarcodes => Set<ProductBarcode>();
+    public DbSet<InventoryOrder> InventoryOrders => Set<InventoryOrder>();
+    public DbSet<InventoryOrderItem> InventoryOrderItems => Set<InventoryOrderItem>();
+    public DbSet<StockRequisition> StockRequisitions => Set<StockRequisition>();
+    public DbSet<StockRequisitionItem> StockRequisitionItems => Set<StockRequisitionItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -92,6 +96,24 @@ public class RetailOsDbContext : DbContext
         
         modelBuilder.Entity<Coupon>().HasQueryFilter(c => _tenant.TenantId == null || c.Promotion.TenantId == _tenant.TenantId);
 
+        modelBuilder.Entity<InventoryOrder>().HasQueryFilter(o =>
+            (_tenant.TenantId == null || o.TenantId == _tenant.TenantId) &&
+            (_tenant.StoreId == null ||
+             o.DestinationStoreId == _tenant.StoreId ||
+             o.SourceStoreId == _tenant.StoreId));
+
+        modelBuilder.Entity<StockRequisition>().HasQueryFilter(r =>
+            (_tenant.TenantId == null || r.TenantId == _tenant.TenantId) &&
+            (_tenant.StoreId == null || r.RequestingStoreId == _tenant.StoreId));
+
+        modelBuilder.Entity<StockRequisitionItem>().HasQueryFilter(i =>
+            (_tenant.TenantId == null || i.Requisition.TenantId == _tenant.TenantId) &&
+            (_tenant.StoreId == null || i.Requisition.RequestingStoreId == _tenant.StoreId));
+
+        modelBuilder.Entity<InventoryOrderItem>().HasQueryFilter(i =>
+            (_tenant.TenantId == null || i.Order.TenantId == _tenant.TenantId) &&
+            (_tenant.StoreId == null || i.Order.DestinationStoreId == _tenant.StoreId || i.Order.SourceStoreId == _tenant.StoreId));
+
         // ── Npgsql ENUM MAPPINGS ─────────────────────────────────────────────
         modelBuilder.HasPostgresEnum<TerminalStatus>();
         modelBuilder.HasPostgresEnum<SessionStatus>();
@@ -111,6 +133,10 @@ public class RetailOsDbContext : DbContext
         modelBuilder.HasPostgresEnum<SubscriptionStatus>();
         modelBuilder.HasPostgresEnum<BillingCycle>();
         modelBuilder.HasPostgresEnum<AuditAction>();
+
+        modelBuilder.HasPostgresEnum<InventoryOrderType>();
+        modelBuilder.HasPostgresEnum<InventoryOrderStatus>();
+        modelBuilder.HasPostgresEnum<RequisitionStatus>();
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

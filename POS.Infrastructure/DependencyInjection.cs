@@ -5,6 +5,7 @@ using POS.Infrastructure.Data;
 using POS.Infrastructure.Repositories;
 using POS.Infrastructure.Services;
 using POS.Infrastructure.Data.Interceptors;
+using POS.Infrastructure.Communication;
 
 namespace POS.Infrastructure;
 
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordService, PasswordService>();
         services.AddScoped<ITokenService, JwtTokenGenerator>();
         services.AddSingleton<IReceiptNumberService, ReceiptNumberService>();
+        services.AddScoped<IEmailService, EmailService>();
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
@@ -40,6 +42,8 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IStoreProductOverrideRepository, StoreProductOverrideRepository>();
         services.AddScoped<IProductBarcodeRepository, ProductBarcodeRepository>();
+        services.AddScoped<IInventoryOrderRepository, InventoryOrderRepository>();
+        services.AddScoped<IStockRequisitionRepository, StockRequisitionRepository>();
 
         return services;
     }

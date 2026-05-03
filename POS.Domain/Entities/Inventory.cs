@@ -6,6 +6,7 @@ namespace POS.Domain.Entities;
 [Auditable]
 public class Inventory : BaseEntity
 {
+    public required Guid TenantId { get; set; }
     public required Guid VariantId { get; set; }
     public required Guid StoreId { get; set; }
     public int QuantityOnHand { get; set; } = 0;

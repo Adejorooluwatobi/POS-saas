@@ -2,6 +2,8 @@ using System.Text.Json;
 using AutoMapper;
 using POS.Domain.Entities;
 using POS.Application.DTOs;
+using POS.Application.DTOs.InventoryOrder;
+using POS.Application.DTOs.StockRequisition;
 
 namespace POS.Application;
 
@@ -231,5 +233,28 @@ public class MappingProfile : Profile
 
         // ── AuditLog ──────────────────────────────────────────────────────
         CreateMap<AuditLog, AuditLogDto>();
+
+        // ── InventoryOrder ────────────────────────────────────────────────
+        CreateMap<InventoryOrder, InventoryOrderDto>()
+            .ForMember(d => d.SourceStoreName, o => o.MapFrom(s => s.SourceStore != null ? s.SourceStore.Name : "HQ"))
+            .ForMember(d => d.DestinationStoreName, o => o.MapFrom(s => s.DestinationStore.Name))
+            .ForMember(d => d.CreatedByName, o => o.MapFrom(s => s.CreatedBy.FullName))
+            .ForMember(d => d.ReceivedByName, o => o.MapFrom(s => s.ReceivedBy != null ? s.ReceivedBy.FullName : null))
+            .ForMember(d => d.ApprovedByName, o => o.MapFrom(s => s.ApprovedBy != null ? s.ApprovedBy.FullName : null))
+            .ForMember(d => d.ResolvedByName, o => o.MapFrom(s => s.ResolvedBy != null ? s.ResolvedBy.FullName : null));
+
+        CreateMap<InventoryOrderItem, InventoryOrderItemDto>()
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Sku)) // Or variant name if it has one
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku));
+
+        // ── StockRequisition ──────────────────────────────────────────────
+        CreateMap<StockRequisition, StockRequisitionDto>()
+            .ForMember(d => d.RequestingStoreName, o => o.MapFrom(s => s.RequestingStore.Name))
+            .ForMember(d => d.CreatedByName, o => o.MapFrom(s => s.CreatedBy.FullName))
+            .ForMember(d => d.ReviewedByName, o => o.MapFrom(s => s.ReviewedBy != null ? s.ReviewedBy.FullName : null));
+
+        CreateMap<StockRequisitionItem, StockRequisitionItemDto>()
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku));
     }
 }

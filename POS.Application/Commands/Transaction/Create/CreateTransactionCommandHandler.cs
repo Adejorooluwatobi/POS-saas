@@ -15,11 +15,14 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     private readonly IMapper _mapper;
     private readonly ITenantContext _tenantContext;
     private readonly IReceiptNumberService _receiptNumberService;
+    private readonly IInventoryRepository _inventoryRepository;
+    private readonly IProductVariantRepository _variantRepository;
 
     public CreateTransactionCommandHandler(
         ITransactionRepository repository, IStoreRepository storeRepository,
         IUnitOfWork uow, IMapper mapper,
-        ITenantContext tenantContext, IReceiptNumberService receiptNumberService)
+        ITenantContext tenantContext, IReceiptNumberService receiptNumberService,
+        IInventoryRepository inventoryRepository, IProductVariantRepository variantRepository)
     {
         _repository = repository;
         _storeRepository = storeRepository;
@@ -27,6 +30,8 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         _mapper = mapper;
         _tenantContext = tenantContext;
         _receiptNumberService = receiptNumberService;
+        _inventoryRepository = inventoryRepository;
+        _variantRepository = variantRepository;
     }
 
     public async Task<TransactionDto> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
@@ -54,6 +59,21 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 TaxAmount = taxAmount,
                 LineTotal = lineTotal
             });
+
+            // ── Inventory Deduction ──────────────────────────────────────────
+            var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId);
+            if (variant != null)
+            {
+                var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
+                var qtyInBaseUnits = (int)(itemDto.Quantity * variant.ConversionFactor);
+
+                var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, request.Dto.StoreId);
+                if (inventory != null)
+                {
+                    inventory.QuantityOnHand -= qtyInBaseUnits;
+                }
+                // Optional: Handle out-of-stock scenarios or logs
+            }
         }
 
         entity.Subtotal = entity.Items.Sum(i => i.UnitPrice * i.Quantity);

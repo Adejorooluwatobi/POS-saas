@@ -38,6 +38,7 @@ public class UpdateInventoryCommandHandlerTests
         var existingInventory = new Inventory 
         { 
             Id = inventoryId, 
+            TenantId = Guid.NewGuid(),
             StoreId = Guid.NewGuid(),
             VariantId = Guid.NewGuid(),
             QuantityOnHand = 10 

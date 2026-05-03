@@ -6,6 +6,8 @@ using POS.Application.Commands.Inventory.Update;
 using POS.Application.DTOs;
 using POS.Application.Queries.Inventory.GetById;
 using POS.Application.Queries.Inventory.GetPaged;
+using POS.Application.Queries.Inventory.GetLowStockAlerts;
+using POS.Application.Queries.Inventory.GetCrossStoreStock;
 
 namespace POS.Api.Controllers;
 
@@ -43,4 +45,13 @@ public class InventoryController : ControllerBase
         await _mediator.Send(new UpdateInventoryCommand(id, dto));
         return NoContent();
     }
+
+    [HttpGet("low-stock/{storeId:guid}")]
+    public async Task<IActionResult> GetLowStock(Guid storeId)
+        => Ok(await _mediator.Send(new GetLowStockAlertsQuery(storeId)));
+
+    [HttpGet("cross-store/{variantId:guid}")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> GetCrossStore(Guid variantId)
+        => Ok(await _mediator.Send(new GetCrossStoreStockQuery(variantId)));
 }
