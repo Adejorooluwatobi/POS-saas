@@ -32,9 +32,9 @@ namespace POS.Infrastructure.Migrations
             migrationBuilder.Sql(@"
                 DELETE FROM ""StoreProductOverrides""
                 WHERE ""Id"" NOT IN (
-                    SELECT MIN(""Id"")
+                    SELECT DISTINCT ON (""StoreId"", ""ProductId"") ""Id""
                     FROM ""StoreProductOverrides""
-                    GROUP BY ""StoreId"", ""ProductId""
+                    ORDER BY ""StoreId"", ""ProductId"", ""CreatedAt"" ASC
                 );
             ");
 
