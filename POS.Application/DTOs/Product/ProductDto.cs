@@ -22,6 +22,17 @@ public class ProductDto
     public List<string> Barcodes { get; set; } = [];
     public Guid? StoreId { get; set; }
     public List<StoreProductOverrideDto> StoreOverrides { get; set; } = [];
+    public List<ProductVariantDto> Variants { get; set; } = [];
+}
+
+public class ProductVariantDto
+{
+    public Guid Id { get; set; }
+    public string SKU { get; set; } = default!;
+    public string Barcode { get; set; } = default!;
+    public decimal BasePrice { get; set; }
+    public decimal? CostPrice { get; set; }
+    public string UnitOfMeasure { get; set; } = "Each";
 }
 
 public class StoreProductOverrideDto

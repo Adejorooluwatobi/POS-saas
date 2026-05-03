@@ -73,6 +73,19 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 inventory.QuantityOnHand += qtyInBaseUnits;
             }
 
+            // --- Subtract from Source Store ---
+            if (order.SourceStoreId.HasValue)
+            {
+                var sourceInventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
+                if (sourceInventory != null)
+                {
+                    sourceInventory.QuantityOnHand -= qtyInBaseUnits;
+                }
+                // Note: If sourceInventory is null, it means the source store sent stock they didn't have recorded.
+                // We allow it to continue but subtract nothing, or we could throw an error. 
+                // In a professional POS, we'd usually allow negative stock if configured, or block it.
+            }
+
             // Update Requisition fulfillment if linked
             if (order.StockRequisitionId.HasValue)
             {
