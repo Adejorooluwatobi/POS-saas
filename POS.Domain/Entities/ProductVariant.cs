@@ -20,13 +20,22 @@ public class ProductVariant : BaseEntity
     public decimal? WeightGrams { get; set; }
     public string UnitOfMeasure { get; set; } = "Each";
     public bool IsActive { get; set; } = true;
+    public int LowStockThreshold { get; set; } = 10;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    // UOM Conversion
+    public bool IsBaseUnit { get; set; } = true;
+    public decimal ConversionFactor { get; set; } = 1m;
+    public Guid? BaseVariantId { get; set; }
 
     // Navigation
     public Tenant Tenant { get; set; } = null!;
     public Product Product { get; set; } = null!;
+    public ProductVariant? BaseVariant { get; set; }
     public ICollection<ProductBarcode> Barcodes { get; set; } = [];
     public ICollection<Inventory> Inventories { get; set; } = [];
     public ICollection<PricingRule> PricingRules { get; set; } = [];
     public ICollection<TransactionItem> TransactionItems { get; set; } = [];
+    public ICollection<InventoryOrderItem> InventoryOrderItems { get; set; } = [];
+    public ICollection<StockRequisitionItem> StockRequisitionItems { get; set; } = [];
 }

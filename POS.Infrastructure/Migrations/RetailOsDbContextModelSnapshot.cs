@@ -25,10 +25,13 @@ namespace POS.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "billing_cycle", new[] { "monthly", "annually" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "customer_tier", new[] { "bronze", "silver", "gold", "platinum" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "discount_type", new[] { "promo", "coupon", "loyalty", "manual", "staff" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "inventory_order_status", new[] { "draft", "dispatched", "received", "approved", "disputed", "resolved" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "inventory_order_type", new[] { "hq_to_store", "store_to_store" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "payment_method", new[] { "cash", "card", "mobile_money", "gift_card", "store_credit", "split" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "payment_status", new[] { "pending", "approved", "declined", "refunded", "partially_refunded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "promotion_scope", new[] { "product", "category", "cart", "customer_tier" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "promotion_type", new[] { "percent", "fixed", "bogo", "bundle", "free_item" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "requisition_status", new[] { "pending", "under_review", "approved", "partially_fulfilled", "fully_fulfilled", "rejected", "cancelled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "session_status", new[] { "open", "suspended", "closed" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_plan", new[] { "starter", "pro", "enterprise" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_status", new[] { "trial", "active", "past_due", "cancelled", "suspended" });
@@ -424,6 +427,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<Guid>("StoreId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -434,10 +440,140 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("StoreId");
 
+                    b.HasIndex("TenantId");
+
                     b.HasIndex("VariantId", "StoreId")
                         .IsUnique();
 
                     b.ToTable("Inventories", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.InventoryOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApprovedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DestinationStoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DispatchedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisputeNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisputePhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsReferredTransfer")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReceivedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ReferralAccepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceStoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("StockRequisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByStaffId");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("DestinationStoreId");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ReceivedByStaffId");
+
+                    b.HasIndex("ResolvedByStaffId");
+
+                    b.HasIndex("SourceStoreId");
+
+                    b.HasIndex("StockRequisitionId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("InventoryOrders");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.InventoryOrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DamageNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DamagePhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("InventoryOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("QuantityDamaged")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantityOrdered")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QuantityReceived")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("VariantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryOrderId");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("InventoryOrderItems");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.LoyaltyLedgerEntry", b =>
@@ -686,6 +822,15 @@ namespace POS.Infrastructure.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<Guid?>("BaseVariantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ConversionFactor")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasDefaultValue(1m);
+
                     b.Property<decimal?>("CostPrice")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -695,6 +840,16 @@ namespace POS.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsBaseUnit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("LowStockThreshold")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(10);
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
@@ -722,6 +877,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("Barcode")
                         .IsUnique();
+
+                    b.HasIndex("BaseVariantId");
 
                     b.HasIndex("ProductId");
 
@@ -932,6 +1089,87 @@ namespace POS.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RequestingStoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequisitionNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("RequestingStoreId");
+
+                    b.HasIndex("RequisitionNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ReviewedByStaffId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("StockRequisitions");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.StockRequisitionItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("QuantityFulfilled")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantityRequested")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StockRequisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("VariantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StockRequisitionId");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("StockRequisitionItems");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Store", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1118,7 +1356,7 @@ namespace POS.Infrastructure.Migrations
                             IsActive = true,
                             IsVerified = false,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 5, 2, 23, 45, 7, 709, DateTimeKind.Unspecified).AddTicks(2253), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 5, 3, 14, 51, 45, 575, DateTimeKind.Unspecified).AddTicks(1686), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 
@@ -1578,6 +1816,87 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.InventoryOrder", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Staff", "ApprovedBy")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("POS.Domain.Entities.Staff", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Store", "DestinationStore")
+                        .WithMany()
+                        .HasForeignKey("DestinationStoreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Staff", "ReceivedBy")
+                        .WithMany()
+                        .HasForeignKey("ReceivedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("POS.Domain.Entities.Staff", "ResolvedBy")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("POS.Domain.Entities.Store", "SourceStore")
+                        .WithMany()
+                        .HasForeignKey("SourceStoreId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("POS.Domain.Entities.StockRequisition", "StockRequisition")
+                        .WithMany("FulfillmentOrders")
+                        .HasForeignKey("StockRequisitionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedBy");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DestinationStore");
+
+                    b.Navigation("ReceivedBy");
+
+                    b.Navigation("ResolvedBy");
+
+                    b.Navigation("SourceStore");
+
+                    b.Navigation("StockRequisition");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.InventoryOrderItem", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.InventoryOrder", "Order")
+                        .WithMany("Items")
+                        .HasForeignKey("InventoryOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.ProductVariant", "Variant")
+                        .WithMany("InventoryOrderItems")
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.LoyaltyLedgerEntry", b =>
                 {
                     b.HasOne("POS.Domain.Entities.Customer", "Customer")
@@ -1672,6 +1991,11 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.ProductVariant", b =>
                 {
+                    b.HasOne("POS.Domain.Entities.ProductVariant", "BaseVariant")
+                        .WithMany()
+                        .HasForeignKey("BaseVariantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("POS.Domain.Entities.Product", "Product")
                         .WithMany("Variants")
                         .HasForeignKey("ProductId")
@@ -1683,6 +2007,8 @@ namespace POS.Infrastructure.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("BaseVariant");
 
                     b.Navigation("Product");
 
@@ -1734,6 +2060,59 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Store");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Staff", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Store", "RequestingStore")
+                        .WithMany()
+                        .HasForeignKey("RequestingStoreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Staff", "ReviewedBy")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("RequestingStore");
+
+                    b.Navigation("ReviewedBy");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.StockRequisitionItem", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.StockRequisition", "Requisition")
+                        .WithMany("Items")
+                        .HasForeignKey("StockRequisitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.ProductVariant", "Variant")
+                        .WithMany("StockRequisitionItems")
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Requisition");
+
+                    b.Navigation("Variant");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Store", b =>
@@ -1899,6 +2278,11 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Payments");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.InventoryOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.Product", b =>
                 {
                     b.Navigation("StoreOverrides");
@@ -1912,7 +2296,11 @@ namespace POS.Infrastructure.Migrations
 
                     b.Navigation("Inventories");
 
+                    b.Navigation("InventoryOrderItems");
+
                     b.Navigation("PricingRules");
+
+                    b.Navigation("StockRequisitionItems");
 
                     b.Navigation("TransactionItems");
                 });
@@ -1936,6 +2324,13 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("TillSessions");
 
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>
+                {
+                    b.Navigation("FulfillmentOrders");
+
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Store", b =>

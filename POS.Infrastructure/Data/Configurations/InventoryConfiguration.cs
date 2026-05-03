@@ -13,8 +13,7 @@ public class InventoryConfiguration : IEntityTypeConfiguration<Inventory>
         builder.Property(i => i.Id).HasDefaultValueSql("gen_random_uuid()");
 
         builder.HasIndex(i => new { i.VariantId, i.StoreId }).IsUnique();
-
-        builder.Ignore(i => i.QuantityAvailable);
+        builder.HasIndex(i => i.TenantId);
 
         builder.HasOne(i => i.Variant)
                .WithMany(v => v.Inventories)

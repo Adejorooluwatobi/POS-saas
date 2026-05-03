@@ -1,0 +1,31 @@
+<div class="summary-card">
+    <div class="summary-item">
+        <span class="summary-label">Order Number:</span>
+        <span class="summary-value">{{OrderNumber}}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">Status:</span>
+        <span class="summary-value">{{Status}}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">Source:</span>
+        <span class="summary-value">{{SourceStore}}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">Destination:</span>
+        <span class="summary-value">{{DestinationStore}}</span>
+    </div>
+</div>
+
+<h3>Items Summary</h3>
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="border-bottom: 2px solid #E2E8F0; text-align: left;">
+            <th style="padding: 12px 0;">Item</th>
+            <th style="padding: 12px 0;">Quantity</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ItemsHtml}}
+    </tbody>
+</table>

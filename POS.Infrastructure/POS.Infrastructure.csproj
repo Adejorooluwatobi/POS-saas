@@ -17,4 +17,10 @@
     <ProjectReference Include="..\POS.Domain\POS.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Communication\Templates\Email\*.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

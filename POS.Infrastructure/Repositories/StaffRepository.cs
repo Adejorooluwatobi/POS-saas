@@ -25,4 +25,20 @@ public class StaffRepository : GenericRepository<Staff>, IStaffRepository
     {
         return await _dbSet.FirstOrDefaultAsync(s => string.Equals(s.Email, email) && s.SystemRole == Domain.Enums.SystemRole.TenantAdmin);
     }
+
+    public async Task<IEnumerable<Staff>> GetManagersByStoreAsync(Guid storeId)
+    {
+        return await _dbSet
+            .Where(s => s.StoreId == storeId && (s.SystemRole == Domain.Enums.SystemRole.StoreManager || s.SystemRole == Domain.Enums.SystemRole.Manager))
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Staff>> GetGeneralsAsync()
+    {
+        return await _dbSet
+            .Where(s => s.SystemRole == Domain.Enums.SystemRole.SuperAdmin || 
+                        s.SystemRole == Domain.Enums.SystemRole.TenantAdmin || 
+                        s.SystemRole == Domain.Enums.SystemRole.Manager)
+            .ToListAsync();
+    }
 }
