@@ -6,6 +6,8 @@ public class UpdatePromotionDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = default!;
+    public string? Code { get; set; }
+    public Guid? StoreId { get; set; }
     public decimal Value { get; set; }
     public decimal? MinPurchase { get; set; }
     public decimal? MaxDiscount { get; set; }

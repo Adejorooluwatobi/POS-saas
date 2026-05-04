@@ -12,11 +12,13 @@ public class GiftCard : BaseEntity
     public string? PinHash { get; set; }
     public required decimal Balance { get; set; }
     public required decimal InitialValue { get; set; }
+    public Guid? IssuingStoreId { get; set; }
     public DateOnly? ExpiresAt { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTimeOffset IssuedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation
     public Tenant Tenant { get; set; } = null!;
+    public Store? IssuingStore { get; set; }
     public ICollection<Payment> Payments { get; set; } = [];
 }

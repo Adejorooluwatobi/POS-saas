@@ -14,6 +14,8 @@ public class Promotion : BaseEntity
     public required PromotionType Type { get; set; }
     public required PromotionScope Scope { get; set; }
     public required decimal Value { get; set; }
+    public string? Code { get; set; }
+    public Guid? StoreId { get; set; }
     public decimal? MinPurchase { get; set; }
     public decimal? MaxDiscount { get; set; }
     public int? MaxUses { get; set; }
@@ -29,6 +31,7 @@ public class Promotion : BaseEntity
 
     // Navigation
     public Tenant Tenant { get; set; } = null!;
+    public Store? Store { get; set; }
     public ICollection<Coupon> Coupons { get; set; } = [];
     public ICollection<AppliedDiscount> AppliedDiscounts { get; set; } = [];
 }

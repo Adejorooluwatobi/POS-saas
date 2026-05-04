@@ -19,16 +19,23 @@ public class PromotionConfiguration : IEntityTypeConfiguration<Promotion>
         builder.Property(p => p.Value).HasPrecision(10, 4).IsRequired();
         builder.Property(p => p.MinPurchase).HasPrecision(12, 2);
         builder.Property(p => p.MaxDiscount).HasPrecision(12, 2);
+        builder.Property(p => p.Code).HasMaxLength(50);
 
         builder.Property(p => p.Conditions)
                .HasColumnType("jsonb");
 
         builder.HasIndex(p => p.TenantId);
+        builder.HasIndex(p => p.Code);
         builder.HasIndex(p => new { p.TenantId, p.IsActive, p.StartsAt, p.EndsAt });
 
         builder.HasOne(p => p.Tenant)
                .WithMany(t => t.Promotions)
                .HasForeignKey(p => p.TenantId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(p => p.Store)
+               .WithMany()
+               .HasForeignKey(p => p.StoreId)
+               .OnDelete(DeleteBehavior.SetNull);
     }
 }
