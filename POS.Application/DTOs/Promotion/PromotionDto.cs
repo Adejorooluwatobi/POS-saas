@@ -10,6 +10,8 @@ public class PromotionDto
     public PromotionType Type { get; set; }
     public PromotionScope Scope { get; set; }
     public decimal Value { get; set; }
+    public string? Code { get; set; }
+    public Guid? StoreId { get; set; }
     public decimal? MinPurchase { get; set; }
     public decimal? MaxDiscount { get; set; }
     public int? MaxUses { get; set; }

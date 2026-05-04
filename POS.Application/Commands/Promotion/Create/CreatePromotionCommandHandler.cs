@@ -27,6 +27,18 @@ public class CreatePromotionCommandHandler : IRequestHandler<CreatePromotionComm
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = _tenantContext.TenantId!.Value;
 
+        // Scoping Logic: Inherited Redemption & Hierarchical Control
+        if (_tenantContext.SystemRole is "StoreManager" or "Supervisor" or "Cashier")
+        {
+            // Store Managers and below are strictly restricted to their own store
+            entity.StoreId = _tenantContext.StoreId;
+        }
+        else
+        {
+            // Admins (SuperAdmin, TenantAdmin, Manager) can create Global (null) or Store-Specific promos
+            entity.StoreId = request.Dto.StoreId;
+        }
+
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<PromotionDto>(entity);

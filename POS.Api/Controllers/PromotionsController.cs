@@ -7,6 +7,7 @@ using POS.Application.Commands.Promotion.Update;
 using POS.Application.DTOs;
 using POS.Application.Queries.Promotion.GetById;
 using POS.Application.Queries.Promotion.GetPaged;
+using POS.Application.Queries.Promotion.Validate;
 
 namespace POS.Api.Controllers;
 
@@ -28,6 +29,11 @@ public class PromotionsController : ControllerBase
         var result = await _mediator.Send(new GetPromotionByIdQuery(id));
         return result is null ? NotFound() : Ok(result);
     }
+
+    [HttpGet("validate/{code}")]
+    [AllowAnonymous] // Allow terminals/customers to check codes without full staff auth if needed, but scoped by TenantId in context
+    public async Task<IActionResult> Validate(string code, [FromQuery] decimal cartAmount)
+        => Ok(await _mediator.Send(new ValidatePromoCodeQuery(code, cartAmount)));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePromotionDto dto)

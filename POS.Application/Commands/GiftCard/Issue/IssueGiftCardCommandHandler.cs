@@ -36,6 +36,17 @@ public class IssueGiftCardCommandHandler : IRequestHandler<IssueGiftCardCommand,
         entity.Balance = request.Dto.InitialValue;
         entity.IsActive = true;
         entity.IssuedAt = DateTimeOffset.UtcNow;
+
+        // Scoping Logic: Track where the gift card was issued
+        if (_tenantContext.SystemRole is "StoreManager" or "Supervisor" or "Cashier")
+        {
+            entity.IssuingStoreId = _tenantContext.StoreId;
+        }
+        else
+        {
+            entity.IssuingStoreId = request.Dto.IssuingStoreId;
+        }
+
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<GiftCardDto>(entity);

@@ -25,5 +25,10 @@ public class GiftCardConfiguration : IEntityTypeConfiguration<GiftCard>
                .WithMany(t => t.GiftCards)
                .HasForeignKey(g => g.TenantId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(g => g.IssuingStore)
+               .WithMany()
+               .HasForeignKey(g => g.IssuingStoreId)
+               .OnDelete(DeleteBehavior.SetNull);
     }
 }
