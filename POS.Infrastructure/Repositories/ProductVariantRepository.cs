@@ -21,6 +21,9 @@ public class ProductVariantRepository : GenericRepository<ProductVariant>, IProd
     public async Task<ProductVariant?> GetByBarcodeAsync(string barcode)
     {
         return await _context.ProductVariants
-            .FirstOrDefaultAsync(v => v.Barcode == barcode && v.IsActive);
+            .Include(v => v.Barcodes)
+            .FirstOrDefaultAsync(v => 
+                (v.Barcode == barcode || v.Barcodes.Any(b => b.BarcodeValue == barcode)) 
+                && v.IsActive);
     }
 }
