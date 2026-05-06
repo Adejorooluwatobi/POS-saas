@@ -33,6 +33,7 @@ public class TransactionItemDto
 {
     public Guid Id { get; set; }
     public Guid VariantId { get; set; }
+    public string VariantName { get; set; } = default!;
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal OriginalPrice { get; set; }
