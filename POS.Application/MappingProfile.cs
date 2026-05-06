@@ -105,7 +105,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.UsedCount, o => o.Ignore());
 
         // ── TillSession ───────────────────────────────────────────────────
-        CreateMap<TillSession, TillSessionDto>();
+        CreateMap<TillSession, TillSessionDto>()
+            .ForMember(d => d.CreatedAt, o => o.MapFrom(s => s.OpenedAt));
         CreateMap<CreateTillSessionDto, TillSession>()
             .ForMember(d => d.StaffId, o => o.Ignore());
         CreateMap<UpdateTillSessionDto, TillSession>()
