@@ -15,7 +15,7 @@ public class TransactionRepository : GenericRepository<Transaction>, ITransactio
     public override async Task<Transaction?> GetByIdAsync(Guid id)
     {
         return await _context.Transactions
-            .Include(t => t.Items)
+            .Include(t => t.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Product)
             .Include(t => t.Payments)
             .Include(t => t.Cashier)
             .Include(t => t.Store)
@@ -25,7 +25,7 @@ public class TransactionRepository : GenericRepository<Transaction>, ITransactio
     public override async Task<PagedResult<Transaction>> GetPagedAsync(int pageNumber, int pageSize)
     {
         var query = _context.Transactions
-            .Include(t => t.Items)
+            .Include(t => t.Items).ThenInclude(i => i.Variant).ThenInclude(v => v.Product)
             .Include(t => t.Payments)
             .Include(t => t.Cashier)
             .Include(t => t.Store);
