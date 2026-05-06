@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.DTOs;
+using POS.Domain.Entities;
 using POS.Domain.Enums;
 using POS.Domain.Repositories;
 

@@ -5,7 +5,7 @@ using POS.Domain.Enums;
 
 namespace POS.Domain.Entities;
 
-public class TillSession : BaseEntity
+public class TillSession : AuditableEntity
 {
     public required Guid TerminalId { get; set; }
     public required Guid StaffId { get; set; }

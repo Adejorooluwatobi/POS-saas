@@ -17,6 +17,8 @@ public class TransactionRepository : GenericRepository<Transaction>, ITransactio
         return await _context.Transactions
             .Include(t => t.Items)
             .Include(t => t.Payments)
+            .Include(t => t.Cashier)
+            .Include(t => t.Store)
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
@@ -24,7 +26,9 @@ public class TransactionRepository : GenericRepository<Transaction>, ITransactio
     {
         var query = _context.Transactions
             .Include(t => t.Items)
-            .Include(t => t.Payments);
+            .Include(t => t.Payments)
+            .Include(t => t.Cashier)
+            .Include(t => t.Store);
 
         var count = await query.CountAsync();
         var items = await query.OrderByDescending(t => t.CreatedAt)

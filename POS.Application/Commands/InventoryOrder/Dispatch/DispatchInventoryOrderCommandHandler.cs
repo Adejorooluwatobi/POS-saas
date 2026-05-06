@@ -109,7 +109,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                     cancellationToken);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Don't fail the command if email fails
             // _logger.LogError(ex, "Failed to send dispatch notifications");

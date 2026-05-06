@@ -125,13 +125,13 @@ public class MappingProfile : Profile
             .ForMember(d => d.StoreId, o => o.Ignore());
 
         // ── Payment ───────────────────────────────────────────────────────
-        CreateMap<Payment, PaymentDto>();
-        CreateMap<CreatePaymentDto, Payment>()
+        CreateMap<POS.Domain.Entities.Payment, PaymentDto>();
+        CreateMap<CreatePaymentDto, POS.Domain.Entities.Payment>()
             .ForMember(d => d.ChangeGiven, o => o.Ignore())
             .ForMember(d => d.GatewayRef, o => o.Ignore())
             .ForMember(d => d.GatewayResponse, o => o.Ignore())
             .ForMember(d => d.ProcessedAt, o => o.Ignore());
-        CreateMap<UpdatePaymentDto, Payment>()
+        CreateMap<UpdatePaymentDto, POS.Domain.Entities.Payment>()
             .ForMember(d => d.Id, o => o.Ignore())
             .ForMember(d => d.TransactionId, o => o.Ignore())
             .ForMember(d => d.Method, o => o.Ignore())
@@ -141,7 +141,9 @@ public class MappingProfile : Profile
         CreateMap<TransactionItem, TransactionItemDto>();
         CreateMap<Transaction, TransactionDto>()
             .ForMember(d => d.Items, o => o.MapFrom(s => s.Items))
-            .ForMember(d => d.Payments, o => o.MapFrom(s => s.Payments));
+            .ForMember(d => d.Payments, o => o.MapFrom(s => s.Payments))
+            .ForMember(d => d.CashierName, o => o.MapFrom(s => s.Cashier != null ? s.Cashier.FullName : "Unknown"))
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store != null ? s.Store.Name : "Unknown"));
         CreateMap<CreateTransactionDto, Transaction>()
             .ForMember(d => d.ReceiptNumber, o => o.Ignore())
             .ForMember(d => d.CashierId, o => o.Ignore())
