@@ -4,4 +4,5 @@ public class CreateTillSessionDto
 {
     public Guid TerminalId { get; set; }
     public decimal OpeningFloat { get; set; }
+    public string? Notes { get; set; }
 }
