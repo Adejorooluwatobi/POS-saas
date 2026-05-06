@@ -6,6 +6,7 @@ using POS.Application.Commands.TillSession.Update;
 using POS.Application.DTOs;
 using POS.Application.Queries.TillSession.GetById;
 using POS.Application.Queries.TillSession.GetPaged;
+using POS.Application.Queries.TillSession.GetProgress;
 
 namespace POS.Api.Controllers;
 
@@ -42,5 +43,11 @@ public class TillSessionsController : ControllerBase
     {
         await _mediator.Send(new UpdateTillSessionCommand(id, dto));
         return NoContent();
+    }
+
+    [HttpGet("{id:guid}/progress")]
+    public async Task<IActionResult> GetProgress(Guid id)
+    {
+        return Ok(await _mediator.Send(new GetTillSessionProgressQuery(id)));
     }
 }

@@ -40,4 +40,12 @@ public class TransactionRepository : GenericRepository<Transaction>, ITransactio
             PageSize = pageSize
         };
     }
+
+    public async Task<IEnumerable<Transaction>> GetBySessionIdAsync(Guid sessionId)
+    {
+        return await _context.Transactions
+            .Include(t => t.Payments)
+            .Where(t => t.SessionId == sessionId)
+            .ToListAsync();
+    }
 }
