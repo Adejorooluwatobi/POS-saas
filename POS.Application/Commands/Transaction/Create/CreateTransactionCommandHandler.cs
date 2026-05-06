@@ -89,8 +89,37 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         entity.TaxTotal = entity.Items.Sum(i => i.TaxAmount);
         entity.GrandTotal = entity.Subtotal + entity.TaxTotal - entity.DiscountTotal;
 
+        // ── Payment Processing ───────────────────────────────────────────
+        if (request.Dto.Payments != null && request.Dto.Payments.Any())
+        {
+            foreach (var p in request.Dto.Payments)
+            {
+                var paymentEntity = new POS.Domain.Entities.Payment
+                {
+                    TransactionId = entity.Id,
+                    Method = p.Method,
+                    Amount = p.Amount,
+                    AmountTendered = p.AmountTendered,
+                    ChangeGiven = (p.AmountTendered ?? p.Amount) - p.Amount,
+                    ProcessedAt = DateTimeOffset.UtcNow
+                };
+                entity.Payments.Add(paymentEntity);
+                entity.AmountPaid += p.Amount;
+                entity.ChangeGiven += paymentEntity.ChangeGiven ?? 0m;
+            }
+
+            if (entity.AmountPaid >= entity.GrandTotal)
+            {
+                entity.Status = POS.Domain.Enums.TransactionStatus.Completed;
+                entity.CompletedAt = DateTimeOffset.UtcNow;
+            }
+        }
+
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
-        return _mapper.Map<TransactionDto>(entity);
+
+        // Fetch back with navigation properties to ensure Cashier and Store names are populated for the DTO mapping
+        var result = await _repository.GetByIdAsync(entity.Id);
+        return _mapper.Map<TransactionDto>(result ?? entity);
     }
 }

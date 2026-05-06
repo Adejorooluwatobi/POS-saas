@@ -23,6 +23,8 @@ public class TransactionDto
     public string? Notes { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+    public string CashierName { get; set; } = default!;
+    public string StoreName { get; set; } = default!;
     public List<TransactionItemDto> Items { get; set; } = [];
     public List<PaymentDto> Payments { get; set; } = [];
 }

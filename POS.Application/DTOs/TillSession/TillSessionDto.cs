@@ -15,4 +15,5 @@ public class TillSessionDto
     public decimal? Variance { get; set; }
     public SessionStatus Status { get; set; }
     public string? Notes { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 }

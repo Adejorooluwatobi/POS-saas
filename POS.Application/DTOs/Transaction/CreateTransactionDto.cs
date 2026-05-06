@@ -10,6 +10,7 @@ public class CreateTransactionDto
     public TransactionType Type { get; set; } = TransactionType.Sale;
     public string? Notes { get; set; }
     public List<CreateTransactionItemDto> Items { get; set; } = [];
+    public List<CreatePaymentDto> Payments { get; set; } = [];
 }
 
 public class CreateTransactionItemDto

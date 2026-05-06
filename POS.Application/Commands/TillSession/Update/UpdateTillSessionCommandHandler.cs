@@ -1,5 +1,6 @@
 using AutoMapper;
 using MediatR;
+using POS.Domain.Entities;
 using POS.Domain.Enums;
 using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
@@ -9,12 +10,14 @@ namespace POS.Application.Commands.TillSession.Update;
 public class UpdateTillSessionCommandHandler : IRequestHandler<UpdateTillSessionCommand>
 {
     private readonly ITillSessionRepository _repository;
+    private readonly ITransactionRepository _transactionRepository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
 
-    public UpdateTillSessionCommandHandler(ITillSessionRepository repository, IUnitOfWork uow, IMapper mapper)
+    public UpdateTillSessionCommandHandler(ITillSessionRepository repository, ITransactionRepository transactionRepository, IUnitOfWork uow, IMapper mapper)
     {
         _repository = repository;
+        _transactionRepository = transactionRepository;
         _uow = uow;
         _mapper = mapper;
     }
@@ -26,9 +29,20 @@ public class UpdateTillSessionCommandHandler : IRequestHandler<UpdateTillSession
 
         _mapper.Map(request.Dto, entity);
 
-        if (entity.Status == SessionStatus.Closed && entity.ClosedAt is null)
+        if (entity.Status == SessionStatus.Closed)
         {
-            entity.ClosedAt = DateTimeOffset.UtcNow;
+            if (entity.ClosedAt is null)
+                entity.ClosedAt = DateTimeOffset.UtcNow;
+
+            // Dynamically calculate expected cash at time of closing
+            var transactions = await _transactionRepository.GetBySessionIdAsync(entity.Id);
+            var cashPayments = transactions
+                .SelectMany(t => t.Payments)
+                .Where(p => p.Method == PaymentMethod.Cash)
+                .Sum(p => p.Amount);
+
+            entity.ExpectedCash = entity.OpeningFloat + cashPayments;
+
             if (entity.ClosingCash.HasValue)
                 entity.Variance = entity.ClosingCash - entity.ExpectedCash;
         }
