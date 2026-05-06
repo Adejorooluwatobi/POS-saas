@@ -129,9 +129,10 @@ public class Program
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("SuperAdminOnly", policy => policy.RequireClaim("system_role", "SuperAdmin"));
-            options.AddPolicy("AdminOnly", policy => policy.RequireClaim("system_role", "SuperAdmin", "TenantAdmin", "Manager"));
+            options.AddPolicy("AdminOnly", policy => policy.RequireClaim("system_role", "SuperAdmin", "TenantAdmin", "Manager", "StoreManager", "Supervisor"));
             options.AddPolicy("StaffOnly", policy => policy.RequireClaim("system_role", "SuperAdmin", "TenantAdmin", "Manager", "StoreManager", "Supervisor", "Cashier"));
             options.AddPolicy("ConsumerOnly", policy => policy.RequireClaim("system_role", "Consumer"));
+
         });
 
         // ── Repositories ───────────────────────────────────────────────────
