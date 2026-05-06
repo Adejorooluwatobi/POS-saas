@@ -21,6 +21,7 @@ public class CreateTransactionCommandHandlerTests
     private readonly Mock<IReceiptNumberService> _receiptNumberServiceMock;
     private readonly Mock<IInventoryRepository> _inventoryRepoMock;
     private readonly Mock<IProductVariantRepository> _variantRepoMock;
+    private readonly Mock<ITillSessionRepository> _sessionRepoMock;
     private readonly CreateTransactionCommandHandler _handler;
 
     public CreateTransactionCommandHandlerTests()
@@ -33,6 +34,7 @@ public class CreateTransactionCommandHandlerTests
         _receiptNumberServiceMock = new Mock<IReceiptNumberService>();
         _inventoryRepoMock = new Mock<IInventoryRepository>();
         _variantRepoMock = new Mock<IProductVariantRepository>();
+        _sessionRepoMock = new Mock<ITillSessionRepository>();
 
         _handler = new CreateTransactionCommandHandler(
             _transactionRepoMock.Object,
@@ -42,7 +44,8 @@ public class CreateTransactionCommandHandlerTests
             _tenantContextMock.Object,
             _receiptNumberServiceMock.Object,
             _inventoryRepoMock.Object,
-            _variantRepoMock.Object
+            _variantRepoMock.Object,
+            _sessionRepoMock.Object
         );
     }
 
@@ -51,12 +54,15 @@ public class CreateTransactionCommandHandlerTests
     {
         // Arrange
         var storeId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var store = new Store { Id = storeId, TenantId = Guid.NewGuid(), Code = "STORE01", Name = "Store 1", Address = "", City = "", Country = "Nigeria", Timezone = "Africa/Lagos" };
+        var session = new TillSession { Id = sessionId, TerminalId = Guid.NewGuid(), StaffId = userId, Status = SessionStatus.Open };
         
         var dto = new CreateTransactionDto
         {
             StoreId = storeId,
+            SessionId = sessionId,
             Items = new List<CreateTransactionItemDto>
             {
                 new CreateTransactionItemDto { VariantId = Guid.NewGuid(), Quantity = 2, UnitPrice = 100, TaxRate = 0.1m }
@@ -67,12 +73,13 @@ public class CreateTransactionCommandHandlerTests
         var transactionEntity = new Transaction 
         { 
             ReceiptNumber = "PENDING", 
-            SessionId = Guid.NewGuid(), 
+            SessionId = sessionId, 
             StoreId = storeId, 
             CashierId = userId
         };
 
         _storeRepoMock.Setup(r => r.GetByIdAsync(storeId)).ReturnsAsync(store);
+        _sessionRepoMock.Setup(r => r.GetByIdAsync(sessionId)).ReturnsAsync(session);
         _mapperMock.Setup(m => m.Map<Transaction>(dto)).Returns(transactionEntity);
         _tenantContextMock.Setup(t => t.UserId).Returns(userId);
         _receiptNumberServiceMock.Setup(s => s.Generate(store.Code)).Returns("REC-001");

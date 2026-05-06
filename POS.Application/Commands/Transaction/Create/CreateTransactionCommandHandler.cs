@@ -17,12 +17,14 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     private readonly IReceiptNumberService _receiptNumberService;
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
+    private readonly ITillSessionRepository _sessionRepository;
 
     public CreateTransactionCommandHandler(
         ITransactionRepository repository, IStoreRepository storeRepository,
         IUnitOfWork uow, IMapper mapper,
         ITenantContext tenantContext, IReceiptNumberService receiptNumberService,
-        IInventoryRepository inventoryRepository, IProductVariantRepository variantRepository)
+        IInventoryRepository inventoryRepository, IProductVariantRepository variantRepository,
+        ITillSessionRepository sessionRepository)
     {
         _repository = repository;
         _storeRepository = storeRepository;
@@ -32,12 +34,19 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         _receiptNumberService = receiptNumberService;
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
+        _sessionRepository = sessionRepository;
     }
 
     public async Task<TransactionDto> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
     {
         var store = await _storeRepository.GetByIdAsync(request.Dto.StoreId)
             ?? throw new KeyNotFoundException($"Store {request.Dto.StoreId} not found.");
+
+        var session = await _sessionRepository.GetByIdAsync(request.Dto.SessionId)
+            ?? throw new KeyNotFoundException($"Till Session {request.Dto.SessionId} not found.");
+
+        if (session.Status != POS.Domain.Enums.SessionStatus.Open)
+            throw new InvalidOperationException("Cannot perform transaction on a closed till session.");
 
         var entity = _mapper.Map<POS.Domain.Entities.Transaction>(request.Dto);
         entity.CashierId = _tenantContext.UserId!.Value;
