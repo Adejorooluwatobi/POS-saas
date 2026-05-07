@@ -13,17 +13,20 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
 {
     private readonly IStaffRepository _staffRepo;
     private readonly IStoreRepository _storeRepo;
+    private readonly ITenantRepository _tenantRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
 
     public LoginPosCommandHandler(
         IStaffRepository staffRepo,
         IStoreRepository storeRepo,
+        ITenantRepository tenantRepo,
         IPasswordService passwordService,
         ITokenService tokenService)
     {
         _staffRepo = staffRepo;
         _storeRepo = storeRepo;
+        _tenantRepo = tenantRepo;
         _passwordService = passwordService;
         _tokenService = tokenService;
     }
@@ -41,6 +44,13 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
         if (!staff.IsActive)
         {
             throw new UnauthorizedAccessException("Your account has been suspended.");
+        }
+
+        // Check if tenant is active
+        var tenant = await _tenantRepo.GetByIdAsync(staff.TenantId);
+        if (tenant != null && !tenant.IsActive)
+        {
+            throw new UnauthorizedAccessException("Your organization has been suspended. Please contact support.");
         }
 
         var store = await _storeRepo.GetByIdAsync(request.Dto.StoreId);

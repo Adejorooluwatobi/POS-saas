@@ -11,6 +11,7 @@ public class TenantDto
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; }
     public bool IsVerified { get; set; }
+    public string? OwnerEmail { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

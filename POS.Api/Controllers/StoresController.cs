@@ -19,8 +19,8 @@ public class StoresController : ControllerBase
     public StoresController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
-    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
-        => Ok(await _mediator.Send(new GetStoresPagedQuery(page, size)));
+    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20, [FromQuery] Guid? tenantId = null)
+        => Ok(await _mediator.Send(new GetStoresPagedQuery(page, size, tenantId)));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
