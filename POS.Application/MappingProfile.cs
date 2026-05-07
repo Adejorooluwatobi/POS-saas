@@ -161,7 +161,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.ChangeGiven, o => o.Ignore())
             .ForMember(d => d.PointsEarned, o => o.Ignore())
             .ForMember(d => d.PointsRedeemed, o => o.Ignore())
-            .ForMember(d => d.Items, o => o.Ignore());
+            .ForMember(d => d.Items, o => o.Ignore())
+            .ForMember(d => d.Payments, o => o.Ignore());
         CreateMap<UpdateTransactionDto, Transaction>()
             .ForMember(d => d.Id, o => o.Ignore())
             .ForMember(d => d.ReceiptNumber, o => o.Ignore())
