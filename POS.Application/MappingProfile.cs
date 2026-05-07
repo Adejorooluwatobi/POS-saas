@@ -118,7 +118,9 @@ public class MappingProfile : Profile
 
         // ── Inventory ─────────────────────────────────────────────────────
         CreateMap<Inventory, InventoryDto>()
-            .ForMember(d => d.QuantityAvailable, o => o.MapFrom(s => s.QuantityAvailable));
+            .ForMember(d => d.QuantityAvailable, o => o.MapFrom(s => s.QuantityAvailable))
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product.SinglesPerRoll))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product.RollsPerPack));
         CreateMap<CreateInventoryDto, Inventory>();
         CreateMap<UpdateInventoryDto, Inventory>()
             .ForMember(d => d.Id, o => o.Ignore())

@@ -18,6 +18,10 @@ public class Product : AuditableEntity
     public decimal TaxRate { get; set; } = 7.5m;
     public bool IsActive { get; set; } = true;
 
+    // Packaging Ratios
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
+
     // Navigation
     public Tenant Tenant { get; set; } = null!;
     public Category? Category { get; set; }

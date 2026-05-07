@@ -13,6 +13,8 @@ public class ProductDto
     public TaxCategory TaxCategory { get; set; }
     public decimal TaxRate { get; set; }
     public bool IsActive { get; set; }
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
     public decimal BasePrice { get; set; }
     public decimal CostPrice { get; set; }
     public decimal? WeightGrams { get; set; }
