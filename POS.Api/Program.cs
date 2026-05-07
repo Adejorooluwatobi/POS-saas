@@ -174,6 +174,7 @@ public class Program
 
         // ── Pipeline ───────────────────────────────────────────────────────
         app.ApplyMigrations();
+        app.SeedSuperAdmin();
 
         app.MapOpenApi();
         app.MapScalarApiReference(options =>
