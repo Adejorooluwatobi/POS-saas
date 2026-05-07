@@ -45,6 +45,8 @@ public class StoreProductOverrideDto
     public Guid Id { get; set; }
     public Guid StoreId { get; set; }
     public decimal Price { get; set; }
+    public decimal? RollPrice { get; set; }
+    public decimal? PackPrice { get; set; }
     public bool IsActive { get; set; }
     public string? ModifiedBy { get; set; }
 }

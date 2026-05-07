@@ -11,6 +11,8 @@ public class StoreProductOverride : AuditableEntity
     
     // Overrideable fields
     public decimal? Price { get; set; }
+    public decimal? RollPrice { get; set; }
+    public decimal? PackPrice { get; set; }
     public bool? IsActive { get; set; }
     public string? ModifiedBy { get; set; }
 
