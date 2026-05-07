@@ -14,17 +14,20 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
 {
     private readonly IStaffRepository _staffRepo;
     private readonly IStoreRepository _storeRepo;
+    private readonly ITenantRepository _tenantRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
 
     public LoginAdminCommandHandler(
         IStaffRepository staffRepo,
         IStoreRepository storeRepo,
+        ITenantRepository tenantRepo,
         IPasswordService passwordService,
         ITokenService tokenService)
     {
         _staffRepo = staffRepo;
         _storeRepo = storeRepo;
+        _tenantRepo = tenantRepo;
         _passwordService = passwordService;
         _tokenService = tokenService;
     }
@@ -42,6 +45,16 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         if (!staff.IsActive)
         {
             throw new UnauthorizedAccessException("Your account has been suspended. Please contact your administrator.");
+        }
+
+        // Check if tenant is active
+        if (staff.SystemRole != SystemRole.SuperAdmin)
+        {
+            var tenant = await _tenantRepo.GetByIdAsync(staff.TenantId);
+            if (tenant != null && !tenant.IsActive)
+            {
+                throw new UnauthorizedAccessException("Your organization has been suspended. Please contact support.");
+            }
         }
 
         // Check if store is active (if staff is assigned to one)

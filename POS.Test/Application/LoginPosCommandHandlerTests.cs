@@ -14,6 +14,7 @@ public class LoginPosCommandHandlerTests
 {
     private readonly Mock<IStaffRepository> _staffRepoMock;
     private readonly Mock<IStoreRepository> _storeRepoMock;
+    private readonly Mock<ITenantRepository> _tenantRepoMock;
     private readonly Mock<IPasswordService> _passwordServiceMock;
     private readonly Mock<ITokenService> _tokenServiceMock;
     private readonly LoginPosCommandHandler _handler;
@@ -22,12 +23,14 @@ public class LoginPosCommandHandlerTests
     {
         _staffRepoMock = new Mock<IStaffRepository>();
         _storeRepoMock = new Mock<IStoreRepository>();
+        _tenantRepoMock = new Mock<ITenantRepository>();
         _passwordServiceMock = new Mock<IPasswordService>();
         _tokenServiceMock = new Mock<ITokenService>();
 
         _handler = new LoginPosCommandHandler(
             _staffRepoMock.Object,
             _storeRepoMock.Object,
+            _tenantRepoMock.Object,
             _passwordServiceMock.Object,
             _tokenServiceMock.Object
         );
@@ -62,6 +65,27 @@ public class LoginPosCommandHandlerTests
         };
 
         _staffRepoMock.Setup(r => r.GetByEmployeeNoAsync(storeId, employeeNo)).ReturnsAsync(staff);
+        _tenantRepoMock.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(new Tenant 
+        { 
+            Id = tenantId, 
+            IsActive = true, 
+            BusinessName = "Test Tenant", 
+            Slug = "test",
+            ContactEmail = "admin@test.com",
+            Country = "Nigeria"
+        });
+        _storeRepoMock.Setup(r => r.GetByIdAsync(storeId)).ReturnsAsync(new Store 
+        { 
+            Id = storeId, 
+            IsActive = true, 
+            Name = "Test Store", 
+            TenantId = tenantId,
+            Code = "ST001",
+            Address = "123 Street",
+            City = "Lagos",
+            Country = "Nigeria",
+            Timezone = "Africa/Lagos"
+        });
         _passwordServiceMock.Setup(s => s.Verify(pin, pinHash)).Returns(true);
         _tokenServiceMock.Setup(s => s.GenerateToken(staffId, employeeNo, "Cashier", "John Doe", tenantId, storeId)).Returns("ValidToken");
 
@@ -100,6 +124,25 @@ public class LoginPosCommandHandlerTests
         };
 
         _staffRepoMock.Setup(r => r.GetByEmployeeNoAsync(storeId, employeeNo)).ReturnsAsync(staff);
+        _tenantRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Tenant 
+        { 
+            IsActive = true,
+            Slug = "test",
+            BusinessName = "Test",
+            ContactEmail = "test@test.com",
+            Country = "Nigeria"
+        });
+        _storeRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Store 
+        { 
+            IsActive = true,
+            TenantId = Guid.NewGuid(),
+            Code = "ST001",
+            Name = "Test Store",
+            Address = "123 Street",
+            City = "Lagos",
+            Country = "Nigeria",
+            Timezone = "Africa/Lagos"
+        });
         _passwordServiceMock.Setup(s => s.Verify(pin, pinHash)).Returns(false);
 
         // Act

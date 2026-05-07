@@ -12,7 +12,11 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         // ── Tenant ────────────────────────────────────────────────────────
-        CreateMap<Tenant, TenantDto>();
+        CreateMap<Tenant, TenantDto>()
+            .ForMember(d => d.OwnerEmail, o => o.MapFrom(s => 
+                s.Staff.FirstOrDefault(st => st.SystemRole == POS.Domain.Enums.SystemRole.TenantAdmin) != null 
+                ? s.Staff.FirstOrDefault(st => st.SystemRole == POS.Domain.Enums.SystemRole.TenantAdmin)!.Email 
+                : null));
         CreateMap<CreateTenantDto, Tenant>();
         CreateMap<UpdateTenantDto, Tenant>()
             .ForMember(d => d.Id, o => o.Ignore())

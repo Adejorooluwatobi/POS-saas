@@ -4,4 +4,4 @@ using POS.Domain.Common;
 
 namespace POS.Application.Queries.Store.GetPaged;
 
-public record GetStoresPagedQuery(int PageNumber, int PageSize) : IRequest<PagedResult<StoreDto>>;
+public record GetStoresPagedQuery(int PageNumber, int PageSize, Guid? TenantId = null) : IRequest<PagedResult<StoreDto>>;

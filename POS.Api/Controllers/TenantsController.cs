@@ -43,6 +43,13 @@ public class TenantsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("{id:guid}/status")]
+    public async Task<IActionResult> SetStatus(Guid id, [FromBody] bool isActive)
+    {
+        await _mediator.Send(new POS.Application.Commands.Tenant.SetStatus.SetTenantStatusCommand(id, isActive));
+        return NoContent();
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
