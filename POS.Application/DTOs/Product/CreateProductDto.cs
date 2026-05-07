@@ -20,4 +20,7 @@ public class CreateProductDto
     public bool IsActive { get; set; } = true;
     public int? SinglesPerRoll { get; set; }
     public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
+    public decimal? RollPrice { get; set; }
+    public decimal? PackPrice { get; set; }
 }

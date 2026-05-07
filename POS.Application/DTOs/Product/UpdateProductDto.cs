@@ -18,6 +18,9 @@ public class UpdateProductDto
     public bool IsActive { get; set; }
     public int? SinglesPerRoll { get; set; }
     public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
+    public decimal? RollPrice { get; set; }
+    public decimal? PackPrice { get; set; }
     
     // Advanced Store Scoping & Multi-Barcoding
     public List<Guid>? TargetStoreIds { get; set; }

@@ -21,6 +21,11 @@ public class Product : AuditableEntity
     // Packaging Ratios
     public int? SinglesPerRoll { get; set; }
     public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
+
+    // Bulk Pricing
+    public decimal? RollPrice { get; set; }
+    public decimal? PackPrice { get; set; }
 
     // Navigation
     public Tenant Tenant { get; set; } = null!;
