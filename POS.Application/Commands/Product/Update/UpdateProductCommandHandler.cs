@@ -75,6 +75,8 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
                         StoreId = storeId,
                         ProductId = entity.Id,
                         Price = request.Dto.SellingPrice,
+                        RollPrice = request.Dto.RollPrice,
+                        PackPrice = request.Dto.PackPrice,
                         IsActive = request.Dto.IsActive,
                         ModifiedBy = _tenantContext.UserName
                     };
@@ -83,6 +85,8 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand>
                 else
                 {
                     @override.Price = request.Dto.SellingPrice;
+                    @override.RollPrice = request.Dto.RollPrice;
+                    @override.PackPrice = request.Dto.PackPrice;
                     @override.IsActive = request.Dto.IsActive;
                     @override.ModifiedBy = _tenantContext.UserName;
                     _overrideRepository.Update(@override);
