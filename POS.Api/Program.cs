@@ -62,6 +62,31 @@ public class Program
             builder.Configuration["Jwt:Secret"] = jwtSecret;
         }
 
+        var adminEmail = Environment.GetEnvironmentVariable("SUPERADMIN_EMAIL") 
+            ?? config["SuperAdmin:Email"];
+        var adminPassword = Environment.GetEnvironmentVariable("SUPERADMIN_PASSWORD") 
+            ?? config["SuperAdmin:Password"];
+
+        if (string.IsNullOrEmpty(adminEmail) || adminEmail.Contains("${SUPERADMIN_EMAIL}"))
+        {
+            adminEmail = null;
+        }
+
+        if (string.IsNullOrEmpty(adminPassword) || adminPassword.Contains("${SUPERADMIN_PASSWORD}"))
+        {
+            adminPassword = null;
+        }
+
+        if (!string.IsNullOrEmpty(adminEmail))
+        {
+            builder.Configuration["SuperAdmin:Email"] = adminEmail;
+        }
+
+        if (!string.IsNullOrEmpty(adminPassword))
+        {
+            builder.Configuration["SuperAdmin:Password"] = adminPassword;
+        }
+
         // ── Core Services ──────────────────────────────────────────────────
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
