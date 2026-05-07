@@ -98,9 +98,11 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 {
                     TransactionId = entity.Id,
                     Method = p.Method,
+                    GiftCardId = p.GiftCardId,
                     Amount = p.Amount,
                     AmountTendered = p.AmountTendered,
                     ChangeGiven = (p.AmountTendered ?? p.Amount) - p.Amount,
+                    Status = POS.Domain.Enums.PaymentStatus.Approved,
                     ProcessedAt = DateTimeOffset.UtcNow
                 };
                 entity.Payments.Add(paymentEntity);

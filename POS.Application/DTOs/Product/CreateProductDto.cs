@@ -18,4 +18,6 @@ public class CreateProductDto
     public string? UnitOfMeasure { get; set; } = "Each";
     public string? Barcode { get; set; }
     public bool IsActive { get; set; } = true;
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
 }

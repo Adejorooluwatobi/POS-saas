@@ -10,5 +10,7 @@ public class InventoryDto
     public int QuantityAvailable { get; set; }
     public int ReorderPoint { get; set; }
     public int ReorderQty { get; set; }
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
