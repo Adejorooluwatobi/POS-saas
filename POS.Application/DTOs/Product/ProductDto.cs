@@ -15,6 +15,9 @@ public class ProductDto
     public bool IsActive { get; set; }
     public int? SinglesPerRoll { get; set; }
     public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
+    public decimal? RollPrice { get; set; }
+    public decimal? PackPrice { get; set; }
     public decimal BasePrice { get; set; }
     public decimal CostPrice { get; set; }
     public decimal? WeightGrams { get; set; }
