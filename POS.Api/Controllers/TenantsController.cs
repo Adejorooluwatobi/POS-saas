@@ -29,6 +29,10 @@ public class TenantsController : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpGet("{id:guid}/details")]
+    public async Task<IActionResult> GetDetails(Guid id, [FromQuery] int? year = null, [FromQuery] int? month = null)
+        => Ok(await _mediator.Send(new POS.Application.Queries.Tenant.GetDetails.GetTenantDetailsQuery(id, year, month)));
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateTenantDto dto)
     {

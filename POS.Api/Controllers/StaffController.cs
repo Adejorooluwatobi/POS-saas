@@ -31,6 +31,11 @@ public class StaffController : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpGet("{id:guid}/stats")]
+    [Authorize(Policy = "StaffOnly")]
+    public async Task<IActionResult> GetStats(Guid id, [FromQuery] int? year = null, [FromQuery] int? month = null)
+        => Ok(await _mediator.Send(new POS.Application.Queries.Staff.GetStats.GetStaffStatsQuery(id, year, month)));
+
     [HttpPost]
     [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateStaffDto dto)
