@@ -12,17 +12,19 @@ namespace POS.Api.Controllers;
 
 [ApiController]
 [Route("api/tenants")]
-[Authorize(Policy = "SuperAdminOnly")]
+[Authorize(Policy = "AdminOnly")]
 public class TenantsController : ControllerBase
 {
     private readonly IMediator _mediator;
     public TenantsController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
         => Ok(await _mediator.Send(new GetTenantsPagedQuery(page, size)));
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetTenantByIdQuery(id));
@@ -34,6 +36,7 @@ public class TenantsController : ControllerBase
         => Ok(await _mediator.Send(new POS.Application.Queries.Tenant.GetDetails.GetTenantDetailsQuery(id, year, month)));
 
     [HttpPost]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateTenantDto dto)
     {
         var result = await _mediator.Send(new CreateTenantCommand(dto));
@@ -41,6 +44,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTenantDto dto)
     {
         await _mediator.Send(new UpdateTenantCommand(id, dto));
@@ -48,6 +52,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/status")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> SetStatus(Guid id, [FromBody] bool isActive)
     {
         await _mediator.Send(new POS.Application.Commands.Tenant.SetStatus.SetTenantStatusCommand(id, isActive));
@@ -55,6 +60,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteTenantCommand(id));
