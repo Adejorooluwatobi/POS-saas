@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.DTOs.Statistics;
 using POS.Domain.Enums;
+using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
 
 namespace POS.Application.Queries.Store.GetDetails;
@@ -13,21 +14,29 @@ public class GetStoreDetailsQueryHandler : IRequestHandler<GetStoreDetailsQuery,
     private readonly IStoreRepository _storeRepo;
     private readonly IStaffRepository _staffRepo;
     private readonly ITransactionRepository _transactionRepo;
+    private readonly ITenantContext _tenantContext;
 
     public GetStoreDetailsQueryHandler(
         IStoreRepository storeRepo,
         IStaffRepository staffRepo,
-        ITransactionRepository transactionRepo)
+        ITransactionRepository transactionRepo,
+        ITenantContext tenantContext)
     {
         _storeRepo = storeRepo;
         _staffRepo = staffRepo;
         _transactionRepo = transactionRepo;
+        _tenantContext = tenantContext;
     }
 
     public async Task<StoreDetailsDto> Handle(GetStoreDetailsQuery request, CancellationToken cancellationToken)
     {
         var store = await _storeRepo.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Store {request.Id} not found.");
+
+        if (_tenantContext.SystemRole != "SuperAdmin" && _tenantContext.TenantId != store.TenantId)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to view details for this store.");
+        }
 
         var now = DateTimeOffset.UtcNow;
         var today = now.Date;

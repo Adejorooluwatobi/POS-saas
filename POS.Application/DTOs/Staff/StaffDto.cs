@@ -19,4 +19,6 @@ public class StaffDto
     public DateTimeOffset CreatedAt { get; set; }
     public bool HasPin { get; set; }
     public bool HasPassword { get; set; }
+    public decimal TodayRevenue { get; set; }
+    public decimal LifetimeRevenue { get; set; }
 }

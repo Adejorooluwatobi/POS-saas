@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.DTOs.Statistics;
 using POS.Domain.Enums;
+using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
 
 namespace POS.Application.Queries.Tenant.GetDetails;
@@ -13,19 +14,27 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
     private readonly ITenantRepository _tenantRepo;
     private readonly IStoreRepository _storeRepo;
     private readonly ITransactionRepository _transactionRepo;
+    private readonly ITenantContext _tenantContext;
 
     public GetTenantDetailsQueryHandler(
         ITenantRepository tenantRepo,
         IStoreRepository storeRepo,
-        ITransactionRepository transactionRepo)
+        ITransactionRepository transactionRepo,
+        ITenantContext tenantContext)
     {
         _tenantRepo = tenantRepo;
         _storeRepo = storeRepo;
         _transactionRepo = transactionRepo;
+        _tenantContext = tenantContext;
     }
 
     public async Task<TenantDetailsDto> Handle(GetTenantDetailsQuery request, CancellationToken cancellationToken)
     {
+        if (_tenantContext.SystemRole != "SuperAdmin" && _tenantContext.TenantId != request.Id)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to view details for this organization.");
+        }
+
         var tenant = await _tenantRepo.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Tenant {request.Id} not found.");
 
