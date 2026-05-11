@@ -62,6 +62,6 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
         var roleStr = staff.SystemRole.ToString();
         var token = _tokenService.GenerateToken(staff.Id, staff.EmployeeNo, roleStr, staff.FullName, staff.TenantId, staff.StoreId);
 
-        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName, staff.Id, staff.Email, staff.StoreId);
+        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName, staff.Id, staff.Email, staff.StoreId, tenant?.BusinessName);
     }
 }
