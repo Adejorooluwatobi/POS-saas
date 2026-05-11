@@ -11,9 +11,11 @@ public class StaffRepository : GenericRepository<Staff>, IStaffRepository
 {
     public StaffRepository(RetailOsDbContext context) : base(context) { }
 
-    public async Task<Staff?> GetByEmailAsync(string email)
+    public async Task<Staff?> GetByEmailAsync(string email, Guid? tenantId = null)
     {
-        return await _dbSet.FirstOrDefaultAsync(s => string.Equals(s.Email, email));
+        return await _dbSet.FirstOrDefaultAsync(s =>
+            string.Equals(s.Email, email) &&
+            (tenantId == null || s.TenantId == tenantId));
     }
 
     public async Task<Staff?> GetByEmployeeNoAsync(Guid storeId, string employeeNo)
@@ -21,9 +23,12 @@ public class StaffRepository : GenericRepository<Staff>, IStaffRepository
         return await _dbSet.FirstOrDefaultAsync(s => s.StoreId == storeId && string.Equals(s.EmployeeNo, employeeNo));
     }
 
-    public async Task<Staff?> GetTenantAdminAsync(string email)
+    public async Task<Staff?> GetTenantAdminAsync(string email, Guid? tenantId = null)
     {
-        return await _dbSet.FirstOrDefaultAsync(s => string.Equals(s.Email, email) && s.SystemRole == Domain.Enums.SystemRole.TenantAdmin);
+        return await _dbSet.FirstOrDefaultAsync(s =>
+            string.Equals(s.Email, email) &&
+            s.SystemRole == Domain.Enums.SystemRole.TenantAdmin &&
+            (tenantId == null || s.TenantId == tenantId));
     }
 
     public async Task<IEnumerable<Staff>> GetManagersByStoreAsync(Guid storeId)

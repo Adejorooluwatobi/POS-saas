@@ -88,7 +88,10 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
             throw new UnauthorizedAccessException("You do not have permission to create staff.");
         }
 
-        entity.TenantId = _tenantContext.TenantId!.Value;
+        if (!_tenantContext.TenantId.HasValue)
+            throw new UnauthorizedAccessException("Unable to determine the tenant for this request. Ensure you are logged in as a tenant user.");
+
+        entity.TenantId = _tenantContext.TenantId.Value;
         entity.PinHash = _passwordService.Hash(request.Dto.Pin);
 
         if (!string.IsNullOrWhiteSpace(request.Dto.Password))
