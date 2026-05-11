@@ -1,6 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using POS.Application.Commands.Promotion.Create;
 using POS.Application.DTOs;
 using POS.Domain.Entities;
@@ -13,24 +13,24 @@ namespace POS.Test.Application;
 
 public class CreatePromotionCommandHandlerTests
 {
-    private readonly Mock<IPromotionRepository> _promotionRepoMock;
-    private readonly Mock<IUnitOfWork> _uowMock;
-    private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<ITenantContext> _tenantContextMock;
+    private readonly IPromotionRepository _promotionRepo;
+    private readonly IUnitOfWork _uow;
+    private readonly IMapper _mapper;
+    private readonly ITenantContext _tenantContext;
     private readonly CreatePromotionCommandHandler _handler;
 
     public CreatePromotionCommandHandlerTests()
     {
-        _promotionRepoMock = new Mock<IPromotionRepository>();
-        _uowMock = new Mock<IUnitOfWork>();
-        _mapperMock = new Mock<IMapper>();
-        _tenantContextMock = new Mock<ITenantContext>();
+        _promotionRepo = Substitute.For<IPromotionRepository>();
+        _uow = Substitute.For<IUnitOfWork>();
+        _mapper = Substitute.For<IMapper>();
+        _tenantContext = Substitute.For<ITenantContext>();
 
         _handler = new CreatePromotionCommandHandler(
-            _promotionRepoMock.Object,
-            _uowMock.Object,
-            _mapperMock.Object,
-            _tenantContextMock.Object
+            _promotionRepo,
+            _uow,
+            _mapper,
+            _tenantContext
         );
     }
 
@@ -58,15 +58,15 @@ public class CreatePromotionCommandHandlerTests
             StartsAt = dto.StartsAt
         };
 
-        _mapperMock.Setup(m => m.Map<Promotion>(dto)).Returns(promotionEntity);
-        _tenantContextMock.Setup(t => t.TenantId).Returns(tenantId);
+        _mapper.Map<Promotion>(dto).Returns(promotionEntity);
+        _tenantContext.TenantId.Returns(tenantId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         promotionEntity.TenantId.Should().Be(tenantId);
-        _promotionRepoMock.Verify(r => r.AddAsync(promotionEntity), Times.Once);
-        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        await _promotionRepo.Received(1).AddAsync(promotionEntity);
+        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

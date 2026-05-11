@@ -1,6 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using POS.Application.Commands.Inventory.Update;
 using POS.Application.DTOs;
 using POS.Domain.Entities;
@@ -12,21 +12,21 @@ namespace POS.Test.Application;
 
 public class UpdateInventoryCommandHandlerTests
 {
-    private readonly Mock<IInventoryRepository> _inventoryRepoMock;
-    private readonly Mock<IUnitOfWork> _uowMock;
-    private readonly Mock<IMapper> _mapperMock;
+    private readonly IInventoryRepository _inventoryRepo;
+    private readonly IUnitOfWork _uow;
+    private readonly IMapper _mapper;
     private readonly UpdateInventoryCommandHandler _handler;
 
     public UpdateInventoryCommandHandlerTests()
     {
-        _inventoryRepoMock = new Mock<IInventoryRepository>();
-        _uowMock = new Mock<IUnitOfWork>();
-        _mapperMock = new Mock<IMapper>();
+        _inventoryRepo = Substitute.For<IInventoryRepository>();
+        _uow = Substitute.For<IUnitOfWork>();
+        _mapper = Substitute.For<IMapper>();
         
         _handler = new UpdateInventoryCommandHandler(
-            _inventoryRepoMock.Object,
-            _uowMock.Object,
-            _mapperMock.Object
+            _inventoryRepo,
+            _uow,
+            _mapper
         );
     }
 
@@ -47,15 +47,15 @@ public class UpdateInventoryCommandHandlerTests
         var dto = new UpdateInventoryDto { QuantityOnHand = 20 };
         var command = new UpdateInventoryCommand(inventoryId, dto);
 
-        _inventoryRepoMock.Setup(r => r.GetByIdAsync(inventoryId)).ReturnsAsync(existingInventory);
+        _inventoryRepo.GetByIdAsync(inventoryId).Returns(existingInventory);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _mapperMock.Verify(m => m.Map(dto, existingInventory), Times.Once);
-        _inventoryRepoMock.Verify(r => r.Update(existingInventory), Times.Once);
-        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mapper.Received(1).Map(dto, existingInventory);
+        _inventoryRepo.Received(1).Update(existingInventory);
+        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class UpdateInventoryCommandHandlerTests
         var dto = new UpdateInventoryDto { QuantityOnHand = 20 };
         var command = new UpdateInventoryCommand(inventoryId, dto);
 
-        _inventoryRepoMock.Setup(r => r.GetByIdAsync(inventoryId)).ReturnsAsync((Inventory?)null);
+        _inventoryRepo.GetByIdAsync(inventoryId).Returns((Inventory?)null);
 
         // Act
         Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None);
