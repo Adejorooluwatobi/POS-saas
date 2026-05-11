@@ -24,6 +24,11 @@ public class CreatePromotionCommandHandler : IRequestHandler<CreatePromotionComm
 
     public async Task<PromotionDto> Handle(CreatePromotionCommand request, CancellationToken cancellationToken)
     {
+        if (_tenantContext.IsSuperAdmin)
+        {
+            throw new UnauthorizedAccessException("Super admins are not allowed to create promotions.");
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = _tenantContext.TenantId!.Value;
 

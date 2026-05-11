@@ -75,6 +75,8 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         
         var token = _tokenService.GenerateToken(staff.Id, staff.Email, roleStr, staff.FullName, tokenTenantId, staff.StoreId);
 
-        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName, staff.Id, staff.Email, staff.StoreId);
+        var businessName = (staff.SystemRole == SystemRole.SuperAdmin) ? "RetailOS Admin" : (await _tenantRepo.GetByIdAsync(staff.TenantId))?.BusinessName;
+
+        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName, staff.Id, staff.Email, staff.StoreId, businessName);
     }
 }
