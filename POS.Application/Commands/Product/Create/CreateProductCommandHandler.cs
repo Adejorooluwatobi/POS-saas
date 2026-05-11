@@ -38,6 +38,11 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
             throw new UnauthorizedAccessException("Tenant context is missing.");
         }
 
+        if (_tenantContext.IsSuperAdmin)
+        {
+            throw new UnauthorizedAccessException("Super admins are not allowed to create products.");
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = tenantId.Value;
         entity.StoreId = _tenantContext.StoreId;

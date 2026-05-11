@@ -31,6 +31,11 @@ public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryComman
             throw new UnauthorizedAccessException("Tenant context is missing. SuperAdmins must provide a TenantId.");
         }
 
+        if (_tenantContext.IsSuperAdmin)
+        {
+            throw new UnauthorizedAccessException("Super admins are not allowed to create categories.");
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = tenantId.Value;
         
