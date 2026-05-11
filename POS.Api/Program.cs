@@ -13,6 +13,7 @@ using System.Text;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi;
+using POS.Api.Services;
 
 namespace POS.Api;
 
@@ -93,6 +94,10 @@ public class Program
             {
                 options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
             });
+
+        builder.Services.AddHttpClient();
+        builder.Services.AddHostedService<KeepAliveService>();
+
         builder.Services.AddOpenApi(options =>
         {
             options.AddDocumentTransformer((document, context, cancellationToken) =>

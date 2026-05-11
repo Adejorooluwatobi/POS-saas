@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using POS.Application.Commands.Auth.LoginPos;
 using POS.Application.DTOs.Auth;
 using POS.Domain.Entities;
@@ -12,27 +12,27 @@ namespace POS.Test.Application;
 
 public class LoginPosCommandHandlerTests
 {
-    private readonly Mock<IStaffRepository> _staffRepoMock;
-    private readonly Mock<IStoreRepository> _storeRepoMock;
-    private readonly Mock<ITenantRepository> _tenantRepoMock;
-    private readonly Mock<IPasswordService> _passwordServiceMock;
-    private readonly Mock<ITokenService> _tokenServiceMock;
+    private readonly IStaffRepository _staffRepo;
+    private readonly IStoreRepository _storeRepo;
+    private readonly ITenantRepository _tenantRepo;
+    private readonly IPasswordService _passwordService;
+    private readonly ITokenService _tokenService;
     private readonly LoginPosCommandHandler _handler;
 
     public LoginPosCommandHandlerTests()
     {
-        _staffRepoMock = new Mock<IStaffRepository>();
-        _storeRepoMock = new Mock<IStoreRepository>();
-        _tenantRepoMock = new Mock<ITenantRepository>();
-        _passwordServiceMock = new Mock<IPasswordService>();
-        _tokenServiceMock = new Mock<ITokenService>();
+        _staffRepo = Substitute.For<IStaffRepository>();
+        _storeRepo = Substitute.For<IStoreRepository>();
+        _tenantRepo = Substitute.For<ITenantRepository>();
+        _passwordService = Substitute.For<IPasswordService>();
+        _tokenService = Substitute.For<ITokenService>();
 
         _handler = new LoginPosCommandHandler(
-            _staffRepoMock.Object,
-            _storeRepoMock.Object,
-            _tenantRepoMock.Object,
-            _passwordServiceMock.Object,
-            _tokenServiceMock.Object
+            _staffRepo,
+            _storeRepo,
+            _tenantRepo,
+            _passwordService,
+            _tokenService
         );
     }
 
@@ -64,8 +64,8 @@ public class LoginPosCommandHandlerTests
             SystemRole = SystemRole.Cashier
         };
 
-        _staffRepoMock.Setup(r => r.GetByEmployeeNoAsync(storeId, employeeNo)).ReturnsAsync(staff);
-        _tenantRepoMock.Setup(r => r.GetByIdAsync(tenantId)).ReturnsAsync(new Tenant 
+        _staffRepo.GetByEmployeeNoAsync(storeId, employeeNo).Returns(staff);
+        _tenantRepo.GetByIdAsync(tenantId).Returns(new Tenant 
         { 
             Id = tenantId, 
             IsActive = true, 
@@ -74,7 +74,7 @@ public class LoginPosCommandHandlerTests
             ContactEmail = "admin@test.com",
             Country = "Nigeria"
         });
-        _storeRepoMock.Setup(r => r.GetByIdAsync(storeId)).ReturnsAsync(new Store 
+        _storeRepo.GetByIdAsync(storeId).Returns(new Store 
         { 
             Id = storeId, 
             IsActive = true, 
@@ -86,8 +86,8 @@ public class LoginPosCommandHandlerTests
             Country = "Nigeria",
             Timezone = "Africa/Lagos"
         });
-        _passwordServiceMock.Setup(s => s.Verify(pin, pinHash)).Returns(true);
-        _tokenServiceMock.Setup(s => s.GenerateToken(staffId, employeeNo, "Cashier", "John Doe", tenantId, storeId)).Returns("ValidToken");
+        _passwordService.Verify(pin, pinHash).Returns(true);
+        _tokenService.GenerateToken(staffId, employeeNo, "Cashier", "John Doe", tenantId, storeId).Returns("ValidToken");
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -123,8 +123,8 @@ public class LoginPosCommandHandlerTests
             TenantId = Guid.NewGuid()
         };
 
-        _staffRepoMock.Setup(r => r.GetByEmployeeNoAsync(storeId, employeeNo)).ReturnsAsync(staff);
-        _tenantRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Tenant 
+        _staffRepo.GetByEmployeeNoAsync(storeId, employeeNo).Returns(staff);
+        _tenantRepo.GetByIdAsync(Arg.Any<Guid>()).Returns(new Tenant 
         { 
             IsActive = true,
             Slug = "test",
@@ -132,7 +132,7 @@ public class LoginPosCommandHandlerTests
             ContactEmail = "test@test.com",
             Country = "Nigeria"
         });
-        _storeRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(new Store 
+        _storeRepo.GetByIdAsync(Arg.Any<Guid>()).Returns(new Store 
         { 
             IsActive = true,
             TenantId = Guid.NewGuid(),
@@ -143,7 +143,7 @@ public class LoginPosCommandHandlerTests
             Country = "Nigeria",
             Timezone = "Africa/Lagos"
         });
-        _passwordServiceMock.Setup(s => s.Verify(pin, pinHash)).Returns(false);
+        _passwordService.Verify(pin, pinHash).Returns(false);
 
         // Act
         Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None);

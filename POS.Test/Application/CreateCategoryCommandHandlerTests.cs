@@ -1,6 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using POS.Application.Commands.Category.Create;
 using POS.Application.DTOs;
 using POS.Domain.Entities;
@@ -13,24 +13,24 @@ namespace POS.Test.Application;
 
 public class CreateCategoryCommandHandlerTests
 {
-    private readonly Mock<ICategoryRepository> _categoryRepoMock;
-    private readonly Mock<IUnitOfWork> _uowMock;
-    private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<ITenantContext> _tenantContextMock;
+    private readonly ICategoryRepository _categoryRepo;
+    private readonly IUnitOfWork _uow;
+    private readonly IMapper _mapper;
+    private readonly ITenantContext _tenantContext;
     private readonly CreateCategoryCommandHandler _handler;
 
     public CreateCategoryCommandHandlerTests()
     {
-        _categoryRepoMock = new Mock<ICategoryRepository>();
-        _uowMock = new Mock<IUnitOfWork>();
-        _mapperMock = new Mock<IMapper>();
-        _tenantContextMock = new Mock<ITenantContext>();
+        _categoryRepo = Substitute.For<ICategoryRepository>();
+        _uow = Substitute.For<IUnitOfWork>();
+        _mapper = Substitute.For<IMapper>();
+        _tenantContext = Substitute.For<ITenantContext>();
 
         _handler = new CreateCategoryCommandHandler(
-            _categoryRepoMock.Object,
-            _uowMock.Object,
-            _mapperMock.Object,
-            _tenantContextMock.Object
+            _categoryRepo,
+            _uow,
+            _mapper,
+            _tenantContext
         );
     }
 
@@ -52,14 +52,14 @@ public class CreateCategoryCommandHandlerTests
             TenantId = tenantId
         };
 
-        _tenantContextMock.Setup(t => t.TenantId).Returns(tenantId);
-        _mapperMock.Setup(m => m.Map<Category>(dto)).Returns(categoryEntity);
+        _tenantContext.TenantId.Returns(tenantId);
+        _mapper.Map<Category>(dto).Returns(categoryEntity);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _categoryRepoMock.Verify(r => r.AddAsync(categoryEntity), Times.Once);
-        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        await _categoryRepo.Received(1).AddAsync(categoryEntity);
+        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

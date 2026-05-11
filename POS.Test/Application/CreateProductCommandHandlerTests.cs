@@ -1,6 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using POS.Application.Commands.Product.Create;
 using POS.Application.DTOs;
 using POS.Domain.Entities;
@@ -13,27 +13,27 @@ namespace POS.Test.Application;
 
 public class CreateProductCommandHandlerTests
 {
-    private readonly Mock<IProductRepository> _productRepoMock;
-    private readonly Mock<IUnitOfWork> _uowMock;
-    private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<ITenantContext> _tenantContextMock;
-    private readonly Mock<IProductVariantRepository> _variantRepoMock;
+    private readonly IProductRepository _productRepo;
+    private readonly IUnitOfWork _uow;
+    private readonly IMapper _mapper;
+    private readonly ITenantContext _tenantContext;
+    private readonly IProductVariantRepository _variantRepo;
     private readonly CreateProductCommandHandler _handler;
 
     public CreateProductCommandHandlerTests()
     {
-        _productRepoMock = new Mock<IProductRepository>();
-        _uowMock = new Mock<IUnitOfWork>();
-        _mapperMock = new Mock<IMapper>();
-        _tenantContextMock = new Mock<ITenantContext>();
-        _variantRepoMock = new Mock<IProductVariantRepository>();
+        _productRepo = Substitute.For<IProductRepository>();
+        _uow = Substitute.For<IUnitOfWork>();
+        _mapper = Substitute.For<IMapper>();
+        _tenantContext = Substitute.For<ITenantContext>();
+        _variantRepo = Substitute.For<IProductVariantRepository>();
 
         _handler = new CreateProductCommandHandler(
-            _productRepoMock.Object,
-            _variantRepoMock.Object,
-            _uowMock.Object,
-            _mapperMock.Object,
-            _tenantContextMock.Object
+            _productRepo,
+            _variantRepo,
+            _uow,
+            _mapper,
+            _tenantContext
         );
     }
 
@@ -51,15 +51,15 @@ public class CreateProductCommandHandlerTests
         var tenantId = Guid.NewGuid();
         var productEntity = new Product { Name = dto.Name, MasterSku = dto.MasterSku, TenantId = tenantId };
 
-        _tenantContextMock.Setup(t => t.TenantId).Returns(tenantId);
-        _mapperMock.Setup(m => m.Map<Product>(dto)).Returns(productEntity);
+        _tenantContext.TenantId.Returns(tenantId);
+        _mapper.Map<Product>(dto).Returns(productEntity);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _productRepoMock.Verify(r => r.AddAsync(productEntity), Times.Once);
-        _variantRepoMock.Verify(r => r.AddAsync(It.IsAny<ProductVariant>()), Times.Once);
-        _uowMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        await _productRepo.Received(1).AddAsync(productEntity);
+        await _variantRepo.Received(1).AddAsync(Arg.Any<ProductVariant>());
+        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }
