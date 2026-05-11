@@ -24,8 +24,9 @@ public class StaffConfiguration : IEntityTypeConfiguration<Staff>
 
         builder.Ignore(s => s.FullName);
 
-        builder.HasIndex(s => s.EmployeeNo).IsUnique();
-        builder.HasIndex(s => s.Email).IsUnique();
+        // Per-tenant uniqueness: two different tenants may share the same EmployeeNo or Email
+        builder.HasIndex(s => new { s.TenantId, s.EmployeeNo }).IsUnique().HasDatabaseName("IX_Staff_TenantId_EmployeeNo");
+        builder.HasIndex(s => new { s.TenantId, s.Email }).IsUnique().HasDatabaseName("IX_Staff_TenantId_Email");
         builder.HasIndex(s => s.TenantId);
         builder.HasIndex(s => new { s.TenantId, s.SystemRole });
 
