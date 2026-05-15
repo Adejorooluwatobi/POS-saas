@@ -42,6 +42,7 @@ public static class MigrationExtensions
         var admin = dbContext.Staff.IgnoreQueryFilters().FirstOrDefault(s => s.Id == superAdminId);
 
         var passwordHash = passwordService.Hash(adminPassword);
+        var numericPinHash = passwordService.Hash("1234");
 
         if (admin == null)
         {
@@ -55,7 +56,7 @@ public static class MigrationExtensions
                 FirstName = "System",
                 LastName = "Admin",
                 PasswordHash = passwordHash,
-                PinHash = passwordHash, 
+                PinHash = numericPinHash, 
                 HiredAt = DateOnly.FromDateTime(new DateTime(2024, 1, 1)),
                 IsActive = true
             };
@@ -65,7 +66,7 @@ public static class MigrationExtensions
         {
             admin.Email = adminEmail;
             admin.PasswordHash = passwordHash;
-            admin.PinHash = passwordHash;
+            admin.PinHash = numericPinHash;
             admin.IsActive = true;
             dbContext.Staff.Update(admin);
         }

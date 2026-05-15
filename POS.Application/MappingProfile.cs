@@ -236,14 +236,8 @@ public class MappingProfile : Profile
         CreateMap<UpdateSubscriptionDto, TenantSubscription>()
             .ForMember(d => d.Id, o => o.Ignore())
             .ForMember(d => d.TenantId, o => o.Ignore())
-            .ForMember(d => d.Status, o => o.Ignore())
-            .ForMember(d => d.MaxStores, o => o.Ignore())
-            .ForMember(d => d.MaxTerminals, o => o.Ignore())
-            .ForMember(d => d.MaxStaff, o => o.Ignore())
-            .ForMember(d => d.MonthlyPrice, o => o.Ignore())
             .ForMember(d => d.TrialEndsAt, o => o.Ignore())
             .ForMember(d => d.CurrentPeriodStart, o => o.Ignore())
-            .ForMember(d => d.CurrentPeriodEnd, o => o.Ignore())
             .ForMember(d => d.CancelledAt, o => o.Ignore());
 
         // ── AuditLog ──────────────────────────────────────────────────────

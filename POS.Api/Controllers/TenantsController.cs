@@ -32,6 +32,7 @@ public class TenantsController : ControllerBase
     }
 
     [HttpGet("{id:guid}/details")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> GetDetails(Guid id, [FromQuery] int? year = null, [FromQuery] int? month = null)
         => Ok(await _mediator.Send(new POS.Application.Queries.Tenant.GetDetails.GetTenantDetailsQuery(id, year, month)));
 

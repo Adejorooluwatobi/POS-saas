@@ -23,5 +23,11 @@ public class TenantSubscriptionDto
 public class UpdateSubscriptionDto
 {
     public SubscriptionPlan Plan { get; set; }
+    public SubscriptionStatus Status { get; set; }
     public BillingCycle BillingCycle { get; set; }
+    public int MaxStores { get; set; }
+    public int MaxStaff { get; set; }
+    public int MaxTerminals { get; set; }
+    public decimal MonthlyPrice { get; set; }
+    public DateTimeOffset CurrentPeriodEnd { get; set; }
 }

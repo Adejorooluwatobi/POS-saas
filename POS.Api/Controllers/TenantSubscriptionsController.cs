@@ -26,6 +26,7 @@ public class TenantSubscriptionsController : ControllerBase
 
     /// <summary>Upgrades or downgrades the subscription plan / billing cycle.</summary>
     [HttpPut("{tenantId:guid}")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> Update(Guid tenantId, [FromBody] UpdateSubscriptionDto dto)
     {
         var result = await _mediator.Send(new UpdateSubscriptionCommand(tenantId, dto));
@@ -34,6 +35,7 @@ public class TenantSubscriptionsController : ControllerBase
 
     /// <summary>Cancels the subscription for a tenant.</summary>
     [HttpDelete("{tenantId:guid}")]
+    [Authorize(Policy = "SuperAdminOnly")]
     public async Task<IActionResult> Cancel(Guid tenantId)
     {
         await _mediator.Send(new CancelSubscriptionCommand(tenantId));
