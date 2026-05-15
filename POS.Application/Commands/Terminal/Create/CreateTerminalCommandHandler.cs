@@ -10,18 +10,40 @@ namespace POS.Application.Commands.Terminal.Create;
 public class CreateTerminalCommandHandler : IRequestHandler<CreateTerminalCommand, TerminalDto>
 {
     private readonly ITerminalRepository _repository;
+    private readonly ITenantSubscriptionRepository _subscriptionRepository;
+    private readonly ITenantContext _tenantContext;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
 
-    public CreateTerminalCommandHandler(ITerminalRepository repository, IUnitOfWork uow, IMapper mapper)
+    public CreateTerminalCommandHandler(
+        ITerminalRepository repository, 
+        ITenantSubscriptionRepository subscriptionRepository,
+        ITenantContext tenantContext,
+        IUnitOfWork uow, 
+        IMapper mapper)
     {
         _repository = repository;
+        _subscriptionRepository = subscriptionRepository;
+        _tenantContext = tenantContext;
         _uow = uow;
         _mapper = mapper;
     }
 
     public async Task<TerminalDto> Handle(CreateTerminalCommand request, CancellationToken cancellationToken)
     {
+        var tenantId = _tenantContext.TenantId ?? throw new UnauthorizedAccessException("Unable to determine the tenant.");
+
+        // ── Subscription Check ───────────────────────────────────────────
+        var sub = await _subscriptionRepository.GetByTenantAsync(tenantId);
+        if (sub != null)
+        {
+            var currentTerminals = _repository.GetQueryable().Count(t => t.Store.TenantId == tenantId);
+            if (currentTerminals >= sub.MaxTerminals)
+            {
+                throw new InvalidOperationException($"Terminal limit reached ({sub.MaxTerminals}). Please upgrade your subscription.");
+            }
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.StoreId = request.StoreId;
         

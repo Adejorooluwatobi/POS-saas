@@ -12,6 +12,7 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
 {
     private readonly IStaffRepository _repository;
     private readonly IRoleRepository _roleRepository;
+    private readonly ITenantSubscriptionRepository _subscriptionRepository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
     private readonly ITenantContext _tenantContext;
@@ -20,6 +21,7 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
     public CreateStaffCommandHandler(
         IStaffRepository repository, 
         IRoleRepository roleRepository,
+        ITenantSubscriptionRepository subscriptionRepository,
         IUnitOfWork uow, 
         IMapper mapper,
         ITenantContext tenantContext, 
@@ -27,6 +29,7 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
     {
         _repository = repository;
         _roleRepository = roleRepository;
+        _subscriptionRepository = subscriptionRepository;
         _uow = uow;
         _mapper = mapper;
         _tenantContext = tenantContext;
@@ -35,6 +38,19 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
 
     public async Task<StaffDto> Handle(CreateStaffCommand request, CancellationToken cancellationToken)
     {
+        var tenantId = _tenantContext.TenantId ?? throw new UnauthorizedAccessException("Unable to determine the tenant.");
+
+        // ── Subscription Check ───────────────────────────────────────────
+        var sub = await _subscriptionRepository.GetByTenantAsync(tenantId);
+        if (sub != null)
+        {
+            var currentStaff = _repository.GetQueryable().Count(s => s.TenantId == tenantId);
+            if (currentStaff >= sub.MaxStaff)
+            {
+                throw new InvalidOperationException($"Staff limit reached ({sub.MaxStaff}). Please upgrade your subscription.");
+            }
+        }
+
         var entity = _mapper.Map<Entity>(request.Dto);
 
         // 1. Resolve SystemRole from RoleId if provided
