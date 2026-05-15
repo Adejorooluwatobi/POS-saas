@@ -33,6 +33,7 @@ public class TenantDetailsDto
     public bool IsActive { get; set; }
     public RevenueStatsDto Revenue { get; set; } = new();
     public List<StoreSummaryDto> Stores { get; set; } = [];
+    public TenantSubscriptionSummaryDto? Subscription { get; set; }
 }
 
 public class StaffStatsDto
@@ -54,4 +55,19 @@ public class StoreSummaryDto
     public bool IsActive { get; set; }
     public decimal MonthlyRevenue { get; set; }
     public decimal LifetimeRevenue { get; set; }
+}
+
+public class TenantSubscriptionSummaryDto
+{
+    public Guid Id { get; set; }
+    public int Plan { get; set; }
+    public int Status { get; set; }
+    public int BillingCycle { get; set; }
+    public int MaxStores { get; set; }
+    public int MaxStaff { get; set; }
+    public int MaxTerminals { get; set; }
+    public decimal MonthlyPrice { get; set; }
+    public DateTimeOffset CurrentPeriodStart { get; set; }
+    public DateTimeOffset CurrentPeriodEnd { get; set; }
+    public bool IsActive => Status == 1; // 1 = Active
 }

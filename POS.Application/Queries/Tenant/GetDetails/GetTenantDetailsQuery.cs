@@ -14,17 +14,20 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
     private readonly ITenantRepository _tenantRepo;
     private readonly IStoreRepository _storeRepo;
     private readonly ITransactionRepository _transactionRepo;
+    private readonly ITenantSubscriptionRepository _subscriptionRepo;
     private readonly ITenantContext _tenantContext;
 
     public GetTenantDetailsQueryHandler(
         ITenantRepository tenantRepo,
         IStoreRepository storeRepo,
         ITransactionRepository transactionRepo,
+        ITenantSubscriptionRepository subscriptionRepo,
         ITenantContext tenantContext)
     {
         _tenantRepo = tenantRepo;
         _storeRepo = storeRepo;
         _transactionRepo = transactionRepo;
+        _subscriptionRepo = subscriptionRepo;
         _tenantContext = tenantContext;
     }
 
@@ -92,6 +95,22 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
                 .SumAsync(t => t.GrandTotal, cancellationToken);
         }
 
+        // Fetch subscription
+        var subscription = await _subscriptionRepo.GetByTenantAsync(request.Id);
+        TenantSubscriptionSummaryDto? subscriptionDto = subscription == null ? null : new TenantSubscriptionSummaryDto
+        {
+            Id = subscription.Id,
+            Plan = (int)subscription.Plan,
+            Status = (int)subscription.Status,
+            BillingCycle = (int)subscription.BillingCycle,
+            MaxStores = subscription.MaxStores,
+            MaxStaff = subscription.MaxStaff,
+            MaxTerminals = subscription.MaxTerminals,
+            MonthlyPrice = subscription.MonthlyPrice,
+            CurrentPeriodStart = subscription.CurrentPeriodStart,
+            CurrentPeriodEnd = subscription.CurrentPeriodEnd
+        };
+
         return new TenantDetailsDto
         {
             Id = tenant.Id,
@@ -100,7 +119,8 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
             ContactEmail = tenant.ContactEmail,
             IsActive = tenant.IsActive,
             Revenue = stats,
-            Stores = stores
+            Stores = stores,
+            Subscription = subscriptionDto
         };
     }
 }
