@@ -8,7 +8,7 @@ namespace POS.Domain.Entities;
 public class TransactionItem : BaseEntity
 {
     public required Guid TransactionId { get; set; }
-    public required Guid VariantId { get; set; }
+    public Guid? VariantId { get; set; }
     public required decimal Quantity { get; set; }
     public required decimal UnitPrice { get; set; }
     public required decimal OriginalPrice { get; set; }
@@ -21,6 +21,6 @@ public class TransactionItem : BaseEntity
 
     // Navigation
     public Transaction Transaction { get; set; } = null!;
-    public ProductVariant Variant { get; set; } = null!;
+    public ProductVariant? Variant { get; set; }
     public ICollection<AppliedDiscount> AppliedDiscounts { get; set; } = [];
 }
