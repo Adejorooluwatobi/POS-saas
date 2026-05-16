@@ -6,7 +6,8 @@ using POS.Domain.Enums;
 
 namespace POS.Domain.Entities;
 
-public class Role : BaseEntity
+[Auditable]
+public class Role : AuditableEntity
 {
     public required Guid TenantId { get; set; }
     public required string Name { get; set; }

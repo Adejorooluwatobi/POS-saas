@@ -12,7 +12,12 @@ public class AuditLogRepository : GenericRepository<AuditLog>, IAuditLogReposito
 
     public async Task<PagedResult<AuditLog>> GetPagedByTenantAsync(Guid tenantId, int pageNumber, int pageSize)
     {
-        var query = _dbSet.Where(a => a.TenantId == tenantId).OrderByDescending(a => a.CreatedAt);
+        var query = _dbSet
+            .Include(a => a.User)
+            .Include(a => a.Store)
+            .Include(a => a.Terminal)
+            .Where(a => a.TenantId == tenantId)
+            .OrderByDescending(a => a.CreatedAt);
         var count = await query.CountAsync();
         var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 
