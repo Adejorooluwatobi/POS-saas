@@ -66,7 +66,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             entity.Items.Add(new TransactionItem
             {
                 TransactionId = entity.Id,
-                VariantId = itemDto.VariantId,
+                VariantId = itemDto.VariantId == Guid.Empty ? null : itemDto.VariantId,
                 Quantity = itemDto.Quantity,
                 UnitPrice = itemDto.UnitPrice,
                 OriginalPrice = itemDto.UnitPrice,
@@ -90,23 +90,36 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 // Optional: Handle out-of-stock scenarios or logs
             }
 
-            // ── Gift Card Issuance ────────────────────────────────────────────
+            // ── Gift Card Issuance / Top-up ──────────────────────────────────
             if (itemDto.IsGiftCardSale && !string.IsNullOrEmpty(itemDto.GiftCardNumber))
             {
-                var giftCard = new POS.Domain.Entities.GiftCard
+                var existingCard = await _giftCardRepository.GetByCardNumberAsync(_tenantContext.TenantId!.Value, itemDto.GiftCardNumber);
+                if (existingCard != null)
                 {
-                    TenantId = _tenantContext.TenantId!.Value,
-                    CardNumber = itemDto.GiftCardNumber,
-                    Balance = lineTotal,
-                    InitialValue = lineTotal,
-                    PinHash = !string.IsNullOrEmpty(itemDto.GiftCardPin) 
-                        ? _passwordService.Hash(itemDto.GiftCardPin) 
-                        : null,
-                    IsActive = true,
-                    IssuedAt = DateTimeOffset.UtcNow,
-                    IssuingStoreId = request.Dto.StoreId
-                };
-                await _giftCardRepository.AddAsync(giftCard);
+                    // If it exists, we just add the balance (Top-up or Activation)
+                    existingCard.Balance += lineTotal;
+                    existingCard.IsActive = true; // Ensure it's active
+                    if (existingCard.IssuingStoreId == null) existingCard.IssuingStoreId = request.Dto.StoreId;
+                    _giftCardRepository.Update(existingCard);
+                }
+                else
+                {
+                    // If it doesn't exist, create it
+                    var giftCard = new POS.Domain.Entities.GiftCard
+                    {
+                        TenantId = _tenantContext.TenantId!.Value,
+                        CardNumber = itemDto.GiftCardNumber,
+                        Balance = lineTotal,
+                        InitialValue = lineTotal,
+                        PinHash = !string.IsNullOrEmpty(itemDto.GiftCardPin) 
+                            ? _passwordService.Hash(itemDto.GiftCardPin) 
+                            : null,
+                        IsActive = true,
+                        IssuedAt = DateTimeOffset.UtcNow,
+                        IssuingStoreId = request.Dto.StoreId
+                    };
+                    await _giftCardRepository.AddAsync(giftCard);
+                }
             }
         }
 
