@@ -59,6 +59,11 @@ public class AuditInterceptor : SaveChangesInterceptor
                 TenantId = _tenantContext.TenantId,
                 StoreId = _tenantContext.StoreId,
                 UserId = _tenantContext.UserId,
+                TerminalId = _tenantContext.TerminalId,
+                TraceId = _tenantContext.TraceId,
+                RequestPath = _tenantContext.RequestPath,
+                IpAddress = _tenantContext.IpAddress,
+                UserAgent = _tenantContext.UserAgent,
                 Action = entry.State switch
                 {
                     EntityState.Added => AuditAction.Insert,
@@ -78,19 +83,25 @@ public class AuditInterceptor : SaveChangesInterceptor
             };
 
             var changes = new Dictionary<string, object?>();
+            var sensitiveFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) 
+            { 
+                "PasswordHash", "PinHash", "PairingCode", "DeviceToken", "ApiKey", "Secret" 
+            };
 
             if (entry.State == EntityState.Added)
             {
                 foreach (var prop in entry.Properties)
                 {
-                    changes[prop.Metadata.Name] = prop.CurrentValue;
+                    var val = sensitiveFields.Contains(prop.Metadata.Name) ? "[MASKED]" : prop.CurrentValue;
+                    changes[prop.Metadata.Name] = val;
                 }
             }
             else if (entry.State == EntityState.Deleted)
             {
                 foreach (var prop in entry.Properties)
                 {
-                    changes[prop.Metadata.Name] = prop.OriginalValue;
+                    var val = sensitiveFields.Contains(prop.Metadata.Name) ? "[MASKED]" : prop.OriginalValue;
+                    changes[prop.Metadata.Name] = val;
                 }
             }
             else if (entry.State == EntityState.Modified)
@@ -98,10 +109,11 @@ public class AuditInterceptor : SaveChangesInterceptor
                 var diff = new Dictionary<string, object?>();
                 foreach (var prop in entry.Properties.Where(p => p.IsModified))
                 {
+                    var isSensitive = sensitiveFields.Contains(prop.Metadata.Name);
                     diff[prop.Metadata.Name] = new
                     {
-                        Old = prop.OriginalValue,
-                        New = prop.CurrentValue
+                        Old = isSensitive ? "[MASKED]" : prop.OriginalValue,
+                        New = isSensitive ? "[MASKED]" : prop.CurrentValue
                     };
                 }
                 changes = diff;

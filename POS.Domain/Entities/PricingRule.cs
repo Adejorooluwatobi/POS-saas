@@ -3,7 +3,8 @@ using POS.Domain.Common;
 
 namespace POS.Domain.Entities;
 
-public class PricingRule : BaseEntity
+[Auditable]
+public class PricingRule : AuditableEntity
 {
     public required Guid TenantId { get; set; }
     public required Guid VariantId { get; set; }

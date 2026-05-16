@@ -243,7 +243,11 @@ public class MappingProfile : Profile
             .ForMember(d => d.CancelledAt, o => o.Ignore());
 
         // ── AuditLog ──────────────────────────────────────────────────────
-        CreateMap<AuditLog, AuditLogDto>();
+        CreateMap<AuditLog, AuditLogDto>()
+            .ForMember(d => d.StaffName, o => o.MapFrom(s => s.User != null ? s.User.FullName : "System"))
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store != null ? s.Store.Name : "Global"))
+            .ForMember(d => d.TerminalName, o => o.MapFrom(s => s.Terminal != null ? s.Terminal.Label ?? s.Terminal.TerminalCode : null))
+            .ForMember(d => d.Changes, o => o.MapFrom(s => s.Changes != null ? s.Changes.RootElement.GetRawText() : null));
 
         // ── InventoryOrder ────────────────────────────────────────────────
         CreateMap<InventoryOrder, InventoryOrderDto>()

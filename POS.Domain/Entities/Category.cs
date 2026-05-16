@@ -4,7 +4,8 @@ using POS.Domain.Common;
 
 namespace POS.Domain.Entities;
 
-public class Category : BaseEntity
+[Auditable]
+public class Category : AuditableEntity
 {
     public required Guid TenantId { get; set; }
     public Guid? ParentId { get; set; }

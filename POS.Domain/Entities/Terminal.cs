@@ -5,7 +5,8 @@ using POS.Domain.Enums;
 
 namespace POS.Domain.Entities;
 
-public class Terminal : BaseEntity
+[Auditable]
+public class Terminal : AuditableEntity
 {
     public required Guid StoreId { get; set; }
     public required string TerminalCode { get; set; }
@@ -18,8 +19,6 @@ public class Terminal : BaseEntity
     public string? PairingCode { get; set; }
     public string? DeviceToken { get; set; }
     public DateTimeOffset? PairingCodeExpiresAt { get; set; }
-
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation
     public Store Store { get; set; } = null!;

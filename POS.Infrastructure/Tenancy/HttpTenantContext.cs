@@ -10,18 +10,32 @@ public class HttpTenantContext : ITenantContext
     public Guid? TenantId { get; }
     public Guid? UserId { get; }
     public Guid? StoreId { get; }
+    public Guid? TerminalId { get; }
     public string? UserName { get; }
     public string SystemRole { get; }
+    public string? IpAddress { get; }
+    public string? UserAgent { get; }
+    public string? TraceId { get; }
+    public string? RequestPath { get; }
 
     public HttpTenantContext(IHttpContextAccessor accessor)
     {
-        var user = accessor.HttpContext?.User;
-        if (user == null)
+        var context = accessor.HttpContext;
+        if (context == null)
         {
             SystemRole = "Anonymous";
             return;
         }
 
+        var user = context.User;
+        
+        // Context Info
+        IpAddress = context.Connection.RemoteIpAddress?.ToString();
+        UserAgent = context.Request.Headers["User-Agent"].ToString();
+        TraceId = context.TraceIdentifier;
+        RequestPath = context.Request.Path;
+
+        // Identity Info
         var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
         TenantId = tenantIdClaim != null ? Guid.Parse(tenantIdClaim) : null;
 
@@ -32,6 +46,11 @@ public class HttpTenantContext : ITenantContext
 
         var storeIdClaim = user.FindFirst("store_id")?.Value;
         StoreId = storeIdClaim != null ? Guid.Parse(storeIdClaim) : null;
+
+        var terminalIdClaim = user.FindFirst("terminal_id")?.Value 
+            ?? context.Request.Headers["X-Terminal-Id"].ToString();
+        if (!string.IsNullOrEmpty(terminalIdClaim) && Guid.TryParse(terminalIdClaim, out var tid))
+            TerminalId = tid;
 
         SystemRole = user.FindFirst("system_role")?.Value ?? "Cashier";
     }

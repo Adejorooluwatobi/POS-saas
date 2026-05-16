@@ -5,6 +5,7 @@ using POS.Domain.Enums;
 
 namespace POS.Domain.Entities;
 
+[Auditable]
 public class Product : AuditableEntity
 {
     public required Guid TenantId { get; set; }
