@@ -66,9 +66,19 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             // ── Inventory Deduction & Name Resolution ────────────────────────
             var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId);
             var itemName = itemDto.Name;
-            if (string.IsNullOrEmpty(itemName) && variant != null)
+            
+            if (string.IsNullOrEmpty(itemName))
             {
-                itemName = variant.Product.Name;
+                if (itemDto.IsGiftCardSale)
+                {
+                    itemName = !string.IsNullOrEmpty(itemDto.GiftCardNumber) 
+                        ? $"Gift Card ({itemDto.GiftCardNumber})" 
+                        : "Gift Card Sale";
+                }
+                else if (variant != null)
+                {
+                    itemName = variant.Product.Name;
+                }
             }
 
             entity.Items.Add(new TransactionItem
