@@ -9,6 +9,7 @@ public class TransactionItem : BaseEntity
 {
     public required Guid TransactionId { get; set; }
     public Guid? VariantId { get; set; }
+    public string? ProductName { get; set; }
     public required decimal Quantity { get; set; }
     public required decimal UnitPrice { get; set; }
     public required decimal OriginalPrice { get; set; }

@@ -150,7 +150,7 @@ public class MappingProfile : Profile
         // ── Transaction ───────────────────────────────────────────────────
         CreateMap<TransactionItem, TransactionItemDto>()
             .ForMember(d => d.VariantName, o => o.MapFrom(s => 
-                s.Variant != null ? (s.Variant.Product != null ? s.Variant.Product.Name : s.Variant.Sku) : "Unknown"));
+                s.ProductName ?? (s.Variant != null ? (s.Variant.Product != null ? s.Variant.Product.Name : s.Variant.Sku) : "Unknown")));
         CreateMap<Transaction, TransactionDto>()
             .ForMember(d => d.Items, o => o.MapFrom(s => s.Items))
             .ForMember(d => d.Payments, o => o.MapFrom(s => s.Payments))
