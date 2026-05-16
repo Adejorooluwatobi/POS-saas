@@ -22,6 +22,8 @@ public class CreateTransactionCommandHandlerTests
     private readonly IInventoryRepository _inventoryRepo;
     private readonly IProductVariantRepository _variantRepo;
     private readonly ITillSessionRepository _sessionRepo;
+    private readonly IGiftCardRepository _giftCardRepo;
+    private readonly IPasswordService _passwordService;
     private readonly CreateTransactionCommandHandler _handler;
 
     public CreateTransactionCommandHandlerTests()
@@ -35,6 +37,8 @@ public class CreateTransactionCommandHandlerTests
         _inventoryRepo = Substitute.For<IInventoryRepository>();
         _variantRepo = Substitute.For<IProductVariantRepository>();
         _sessionRepo = Substitute.For<ITillSessionRepository>();
+        _giftCardRepo = Substitute.For<IGiftCardRepository>();
+        _passwordService = Substitute.For<IPasswordService>();
 
         _handler = new CreateTransactionCommandHandler(
             _transactionRepo,
@@ -45,7 +49,9 @@ public class CreateTransactionCommandHandlerTests
             _receiptNumberService,
             _inventoryRepo,
             _variantRepo,
-            _sessionRepo
+            _sessionRepo,
+            _giftCardRepo,
+            _passwordService
         );
     }
 

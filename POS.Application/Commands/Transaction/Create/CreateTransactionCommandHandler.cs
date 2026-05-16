@@ -98,6 +98,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                     TenantId = _tenantContext.TenantId!.Value,
                     CardNumber = itemDto.GiftCardNumber,
                     Balance = lineTotal,
+                    InitialValue = lineTotal,
                     PinHash = !string.IsNullOrEmpty(itemDto.GiftCardPin) 
                         ? _passwordService.Hash(itemDto.GiftCardPin) 
                         : null,
