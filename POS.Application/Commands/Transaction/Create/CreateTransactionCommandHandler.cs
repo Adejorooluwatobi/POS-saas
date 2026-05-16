@@ -18,13 +18,17 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
     private readonly ITillSessionRepository _sessionRepository;
+    private readonly IGiftCardRepository _giftCardRepository;
+    private readonly IPasswordService _passwordService;
 
     public CreateTransactionCommandHandler(
         ITransactionRepository repository, IStoreRepository storeRepository,
         IUnitOfWork uow, IMapper mapper,
         ITenantContext tenantContext, IReceiptNumberService receiptNumberService,
         IInventoryRepository inventoryRepository, IProductVariantRepository variantRepository,
-        ITillSessionRepository sessionRepository)
+        ITillSessionRepository sessionRepository,
+        IGiftCardRepository giftCardRepository,
+        IPasswordService passwordService)
     {
         _repository = repository;
         _storeRepository = storeRepository;
@@ -35,6 +39,8 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
         _sessionRepository = sessionRepository;
+        _giftCardRepository = giftCardRepository;
+        _passwordService = passwordService;
     }
 
     public async Task<TransactionDto> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
@@ -82,6 +88,24 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                     inventory.QuantityOnHand -= qtyInBaseUnits;
                 }
                 // Optional: Handle out-of-stock scenarios or logs
+            }
+
+            // ── Gift Card Issuance ────────────────────────────────────────────
+            if (itemDto.IsGiftCardSale && !string.IsNullOrEmpty(itemDto.GiftCardNumber))
+            {
+                var giftCard = new POS.Domain.Entities.GiftCard
+                {
+                    TenantId = _tenantContext.TenantId!.Value,
+                    CardNumber = itemDto.GiftCardNumber,
+                    Balance = lineTotal,
+                    PinHash = !string.IsNullOrEmpty(itemDto.GiftCardPin) 
+                        ? _passwordService.Hash(itemDto.GiftCardPin) 
+                        : null,
+                    IsActive = true,
+                    IssuedAt = DateTimeOffset.UtcNow,
+                    IssuingStoreId = request.Dto.StoreId
+                };
+                await _giftCardRepository.AddAsync(giftCard);
             }
         }
 
