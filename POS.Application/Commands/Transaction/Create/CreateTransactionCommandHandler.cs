@@ -63,10 +63,19 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             var taxAmount = itemDto.UnitPrice * itemDto.Quantity * itemDto.TaxRate;
             var lineTotal = itemDto.UnitPrice * itemDto.Quantity + taxAmount;
 
+            // ── Inventory Deduction & Name Resolution ────────────────────────
+            var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId);
+            var itemName = itemDto.Name;
+            if (string.IsNullOrEmpty(itemName) && variant != null)
+            {
+                itemName = variant.Product.Name;
+            }
+
             entity.Items.Add(new TransactionItem
             {
                 TransactionId = entity.Id,
                 VariantId = itemDto.VariantId == Guid.Empty ? null : itemDto.VariantId,
+                ProductName = itemName ?? "Unknown",
                 Quantity = itemDto.Quantity,
                 UnitPrice = itemDto.UnitPrice,
                 OriginalPrice = itemDto.UnitPrice,
@@ -75,8 +84,6 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 LineTotal = lineTotal
             });
 
-            // ── Inventory Deduction ──────────────────────────────────────────
-            var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId);
             if (variant != null)
             {
                 var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;

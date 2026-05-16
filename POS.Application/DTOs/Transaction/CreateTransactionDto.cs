@@ -19,6 +19,7 @@ public class CreateTransactionItemDto
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal TaxRate { get; set; }
+    public string? Name { get; set; }
     
     // Gift Card Issuance
     public bool IsGiftCardSale { get; set; }
