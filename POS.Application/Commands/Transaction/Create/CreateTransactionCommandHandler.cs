@@ -117,6 +117,23 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                     existingCard.Balance += lineTotal;
                     existingCard.IsActive = true; // Ensure it's active
                     if (existingCard.IssuingStoreId == null) existingCard.IssuingStoreId = request.Dto.StoreId;
+                    
+                    if (!string.IsNullOrEmpty(itemDto.GiftCardPin))
+                    {
+                        if (string.IsNullOrEmpty(existingCard.PinHash))
+                        {
+                            existingCard.PinHash = _passwordService.Hash(itemDto.GiftCardPin);
+                        }
+                        else
+                        {
+                            if (string.IsNullOrEmpty(itemDto.GiftCardOldPin) || !_passwordService.Verify(itemDto.GiftCardOldPin, existingCard.PinHash))
+                            {
+                                throw new InvalidOperationException("Invalid current PIN for Gift Card");
+                            }
+                            existingCard.PinHash = _passwordService.Hash(itemDto.GiftCardPin);
+                        }
+                    }
+
                     _giftCardRepository.Update(existingCard);
                 }
                 else
