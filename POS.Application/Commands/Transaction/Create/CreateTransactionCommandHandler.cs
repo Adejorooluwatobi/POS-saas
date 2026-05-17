@@ -77,7 +77,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 }
                 else if (variant != null)
                 {
-                    itemName = variant.Product.Name;
+                    itemName = variant.Product?.Name ?? "Unknown";
                 }
             }
 

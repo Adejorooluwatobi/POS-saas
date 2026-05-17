@@ -4,10 +4,11 @@ namespace POS.Infrastructure.Services;
 
 public class ReceiptNumberService : IReceiptNumberService
 {
-    public string Generate(string storeCode)
+    public string Generate(string? storeCode)
     {
+        var safeCode = string.IsNullOrWhiteSpace(storeCode) ? "STR" : storeCode.ToUpper();
         var datePart = DateTimeOffset.UtcNow.ToString("yyyyMMdd");
         var random = Random.Shared.Next(1000, 9999);
-        return $"{storeCode.ToUpper()}-{datePart}-{random}";
+        return $"{safeCode}-{datePart}-{random}";
     }
 }
