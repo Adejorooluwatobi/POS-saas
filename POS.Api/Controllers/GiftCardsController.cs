@@ -32,6 +32,13 @@ public class GiftCardsController : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpGet("by-number/{cardNumber}")]
+    public async Task<IActionResult> GetByNumber(string cardNumber)
+    {
+        var result = await _mediator.Send(new POS.Application.Queries.GiftCard.GetByNumber.GetGiftCardByNumberQuery(cardNumber));
+        return result is null ? NotFound() : Ok(result);
+    }
+
     /// <summary>Issues a new gift card for the current tenant.</summary>
     [HttpPost("issue")]
     public async Task<IActionResult> Issue([FromBody] IssueGiftCardDto dto)
