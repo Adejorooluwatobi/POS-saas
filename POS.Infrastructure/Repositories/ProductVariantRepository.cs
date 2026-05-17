@@ -11,6 +11,13 @@ public class ProductVariantRepository : GenericRepository<ProductVariant>, IProd
     {
     }
 
+    public override async Task<ProductVariant?> GetByIdAsync(Guid id)
+    {
+        return await _context.ProductVariants
+            .Include(v => v.Product)
+            .FirstOrDefaultAsync(v => v.Id == id);
+    }
+
     public async Task<IEnumerable<ProductVariant>> GetByProductIdAsync(Guid productId)
     {
         return await _context.ProductVariants
