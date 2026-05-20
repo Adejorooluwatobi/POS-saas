@@ -20,6 +20,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     private readonly ITillSessionRepository _sessionRepository;
     private readonly IGiftCardRepository _giftCardRepository;
     private readonly IPasswordService _passwordService;
+    private readonly IGiftCardNumberGenerator _cardNumberGenerator;
 
     public CreateTransactionCommandHandler(
         ITransactionRepository repository, IStoreRepository storeRepository,
@@ -28,7 +29,8 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         IInventoryRepository inventoryRepository, IProductVariantRepository variantRepository,
         ITillSessionRepository sessionRepository,
         IGiftCardRepository giftCardRepository,
-        IPasswordService passwordService)
+        IPasswordService passwordService,
+        IGiftCardNumberGenerator cardNumberGenerator)
     {
         _repository = repository;
         _storeRepository = storeRepository;
@@ -41,6 +43,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         _sessionRepository = sessionRepository;
         _giftCardRepository = giftCardRepository;
         _passwordService = passwordService;
+        _cardNumberGenerator = cardNumberGenerator;
     }
 
     public async Task<TransactionDto> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
@@ -62,6 +65,14 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         {
             var taxAmount = itemDto.UnitPrice * itemDto.Quantity * itemDto.TaxRate;
             var lineTotal = itemDto.UnitPrice * itemDto.Quantity + taxAmount;
+
+            if (itemDto.IsGiftCardSale)
+            {
+                if (string.IsNullOrEmpty(itemDto.GiftCardNumber) || itemDto.GiftCardNumber.Length != 16)
+                {
+                    itemDto.GiftCardNumber = await _cardNumberGenerator.GenerateCardNumberAsync(_tenantContext.TenantId!.Value, cancellationToken);
+                }
+            }
 
             // ── Inventory Deduction & Name Resolution ────────────────────────
             var variant = await _variantRepository.GetByIdAsync(itemDto.VariantId);

@@ -24,6 +24,7 @@ public class CreateTransactionCommandHandlerTests
     private readonly ITillSessionRepository _sessionRepo;
     private readonly IGiftCardRepository _giftCardRepo;
     private readonly IPasswordService _passwordService;
+    private readonly IGiftCardNumberGenerator _cardNumberGenerator;
     private readonly CreateTransactionCommandHandler _handler;
 
     public CreateTransactionCommandHandlerTests()
@@ -39,6 +40,7 @@ public class CreateTransactionCommandHandlerTests
         _sessionRepo = Substitute.For<ITillSessionRepository>();
         _giftCardRepo = Substitute.For<IGiftCardRepository>();
         _passwordService = Substitute.For<IPasswordService>();
+        _cardNumberGenerator = Substitute.For<IGiftCardNumberGenerator>();
 
         _handler = new CreateTransactionCommandHandler(
             _transactionRepo,
@@ -51,7 +53,8 @@ public class CreateTransactionCommandHandlerTests
             _variantRepo,
             _sessionRepo,
             _giftCardRepo,
-            _passwordService
+            _passwordService,
+            _cardNumberGenerator
         );
     }
 

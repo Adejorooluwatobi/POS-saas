@@ -13,17 +13,20 @@ public class IssueGiftCardCommandHandler : IRequestHandler<IssueGiftCardCommand,
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
     private readonly ITenantContext _tenantContext;
+    private readonly IGiftCardNumberGenerator _cardNumberGenerator;
 
     public IssueGiftCardCommandHandler(
         IGiftCardRepository repository,
         IUnitOfWork uow,
         IMapper mapper,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        IGiftCardNumberGenerator cardNumberGenerator)
     {
         _repository = repository;
         _uow = uow;
         _mapper = mapper;
         _tenantContext = tenantContext;
+        _cardNumberGenerator = cardNumberGenerator;
     }
 
     public async Task<GiftCardDto> Handle(IssueGiftCardCommand request, CancellationToken cancellationToken)
@@ -33,6 +36,7 @@ public class IssueGiftCardCommandHandler : IRequestHandler<IssueGiftCardCommand,
 
         var entity = _mapper.Map<Entity>(request.Dto);
         entity.TenantId = _tenantContext.TenantId.Value;
+        entity.CardNumber = await _cardNumberGenerator.GenerateCardNumberAsync(entity.TenantId, cancellationToken);
         entity.Balance = request.Dto.InitialValue;
         entity.IsActive = true;
         entity.IssuedAt = DateTimeOffset.UtcNow;
