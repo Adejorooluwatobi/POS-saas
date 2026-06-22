@@ -16,7 +16,7 @@ public static class MigrationExtensions
             scope.ServiceProvider.GetRequiredService<RetailOsDbContext>();
 
         // Set timeout to 60 seconds to allow for free-tier latency
-        dbContext.Database.SetCommandTimeout(60);
+        dbContext.Database.SetCommandTimeout(120);
         
         dbContext.Database.Migrate();
     }
