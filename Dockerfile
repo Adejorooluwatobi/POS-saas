@@ -21,6 +21,12 @@ RUN dotnet publish "POS.Api.csproj" -c Release -o /app/publish /p:UseAppHost=fal
 # Final stage: Use the runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+
+# Install required system library for Npgsql database connections
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=publish /app/publish .
 
 # Expose the port Render uses
