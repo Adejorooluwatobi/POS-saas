@@ -31,7 +31,16 @@ public static class MigrationExtensions
         var passwordService = services.GetRequiredService<IPasswordService>();
 
         // Set timeout for seeding operations as well
+        try {
         dbContext.Database.SetCommandTimeout(120);
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex) {
+        // This will print the actual database error to your Render logs
+        Console.WriteLine($"MIGRATION ERROR: {ex.Message}");
+        Console.WriteLine($"INNER EXCEPTION: {ex.InnerException?.Message}");
+        throw; // Still let it crash so you can see it in the logs
+    }
 
         var adminEmail = config["SuperAdmin:Email"];
         var adminPassword = config["SuperAdmin:Password"];
