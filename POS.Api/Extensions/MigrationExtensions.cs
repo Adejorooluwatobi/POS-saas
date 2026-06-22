@@ -15,6 +15,9 @@ public static class MigrationExtensions
         using RetailOsDbContext dbContext = 
             scope.ServiceProvider.GetRequiredService<RetailOsDbContext>();
 
+        // Set timeout to 60 seconds to allow for free-tier latency
+        dbContext.Database.SetCommandTimeout(60);
+        
         dbContext.Database.Migrate();
     }
 
@@ -26,6 +29,9 @@ public static class MigrationExtensions
         var dbContext = services.GetRequiredService<RetailOsDbContext>();
         var config = services.GetRequiredService<IConfiguration>();
         var passwordService = services.GetRequiredService<IPasswordService>();
+
+        // Set timeout for seeding operations as well
+        dbContext.Database.SetCommandTimeout(120);
 
         var adminEmail = config["SuperAdmin:Email"];
         var adminPassword = config["SuperAdmin:Password"];
