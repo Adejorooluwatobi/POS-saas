@@ -32,7 +32,8 @@ public class GetStaffsPagedQueryHandler : IRequestHandler<GetStaffsPagedQuery, P
         var pagedEntities = await _repository.GetPagedAsync(request.PageNumber, request.PageSize);
         var dtos = _mapper.Map<List<StaffDto>>(pagedEntities.Items);
 
-        var today = DateTimeOffset.UtcNow.Date;
+        var now = DateTimeOffset.UtcNow;
+        var today = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
 
         foreach (var dto in dtos)
         {
