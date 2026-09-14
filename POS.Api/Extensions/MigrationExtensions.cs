@@ -3,6 +3,7 @@ using POS.Infrastructure.Data;
 using POS.Domain.Entities;
 using POS.Domain.Enums;
 using POS.Domain.Interfaces;
+using Serilog;
 
 namespace POS.Api.Extensions;
 
@@ -11,14 +12,14 @@ public static class MigrationExtensions
     public static void ApplyMigrations(this IApplicationBuilder app)
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
-
         using RetailOsDbContext dbContext = 
             scope.ServiceProvider.GetRequiredService<RetailOsDbContext>();
 
-        // Set timeout to 60 seconds to allow for free-tier latency
         dbContext.Database.SetCommandTimeout(120);
         
+        Log.Information("Applying database migrations...");
         dbContext.Database.Migrate();
+        Log.Information("Database migrations applied successfully.");
     }
 
     public static void SeedSuperAdmin(this IApplicationBuilder app)
@@ -30,25 +31,16 @@ public static class MigrationExtensions
         var config = services.GetRequiredService<IConfiguration>();
         var passwordService = services.GetRequiredService<IPasswordService>();
 
-        // Set timeout for seeding operations as well
-        try {
-        dbContext.Database.SetCommandTimeout(120);
-        dbContext.Database.Migrate();
-    }
-    catch (Exception ex) {
-        // This will print the actual database error to your Render logs
-        Console.WriteLine($"MIGRATION ERROR: {ex.Message}");
-        Console.WriteLine($"INNER EXCEPTION: {ex.InnerException?.Message}");
-        throw; // Still let it crash so you can see it in the logs
-    }
-
         var adminEmail = config["SuperAdmin:Email"];
         var adminPassword = config["SuperAdmin:Password"];
 
         if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
+            Log.Warning("SuperAdmin credentials not configured. Skipping SuperAdmin seed.");
             return;
         }
+
+        Log.Information("Seeding SuperAdmin user ({Email})...", adminEmail);
 
         var superAdminId = Guid.Parse("00000000-0000-0000-0000-000000000002");
         var systemTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
@@ -87,5 +79,6 @@ public static class MigrationExtensions
         }
 
         dbContext.SaveChanges();
+        Log.Information("SuperAdmin seeding completed successfully.");
     }
 }
