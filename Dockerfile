@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=publish /app/publish .
 
-# Expose the port Render uses
+# Expose application port
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
