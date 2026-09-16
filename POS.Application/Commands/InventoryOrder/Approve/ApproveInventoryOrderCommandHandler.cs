@@ -12,6 +12,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
     private readonly IStockRequisitionRepository _requisitionRepository;
+    private readonly IStockMovementRepository _movementRepository;
     private readonly IUnitOfWork _uow;
     private readonly ITenantContext _tenantContext;
 
@@ -20,6 +21,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
         IInventoryRepository inventoryRepository,
         IProductVariantRepository variantRepository,
         IStockRequisitionRepository requisitionRepository,
+        IStockMovementRepository movementRepository,
         IUnitOfWork uow,
         ITenantContext tenantContext)
     {
@@ -27,6 +29,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
         _requisitionRepository = requisitionRepository;
+        _movementRepository = movementRepository;
         _uow = uow;
         _tenantContext = tenantContext;
     }
@@ -73,18 +76,19 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 inventory.QuantityOnHand += qtyInBaseUnits;
             }
 
-            // --- Subtract from Source Store ---
-            if (order.SourceStoreId.HasValue)
+            // Create Stock Movement log
+            var movement = new Domain.Entities.StockMovement
             {
-                var sourceInventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
-                if (sourceInventory != null)
-                {
-                    sourceInventory.QuantityOnHand -= qtyInBaseUnits;
-                }
-                // Note: If sourceInventory is null, it means the source store sent stock they didn't have recorded.
-                // We allow it to continue but subtract nothing, or we could throw an error. 
-                // In a professional POS, we'd usually allow negative stock if configured, or block it.
-            }
+                TenantId = order.TenantId,
+                StoreId = order.DestinationStoreId,
+                VariantId = baseVariantId,
+                QuantityChange = qtyInBaseUnits,
+                BalanceAfter = inventory.QuantityOnHand,
+                Reason = $"Received Order {order.OrderNumber}",
+                ReferenceId = order.Id,
+                ReferenceType = "InventoryOrder"
+            };
+            await _movementRepository.AddAsync(movement);
 
             // Update Requisition fulfillment if linked
             if (order.StockRequisitionId.HasValue)

@@ -30,6 +30,11 @@ public class CreateInventoryCommandHandler : IRequestHandler<CreateInventoryComm
         }
 
         var entity = _mapper.Map<Entity>(request.Dto);
+        if (_tenantContext.TenantId.HasValue)
+        {
+            entity.TenantId = _tenantContext.TenantId.Value;
+        }
+        
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<InventoryDto>(entity);

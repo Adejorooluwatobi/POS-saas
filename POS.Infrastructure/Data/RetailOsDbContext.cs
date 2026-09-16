@@ -51,6 +51,7 @@ public class RetailOsDbContext : DbContext
     public DbSet<InventoryOrder> InventoryOrders => Set<InventoryOrder>();
     public DbSet<InventoryOrderItem> InventoryOrderItems => Set<InventoryOrderItem>();
     public DbSet<StockRequisition> StockRequisitions => Set<StockRequisition>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<StockRequisitionItem> StockRequisitionItems => Set<StockRequisitionItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -83,7 +84,7 @@ public class RetailOsDbContext : DbContext
         // Indirectly scoped entities - filtered via navigation paths
         modelBuilder.Entity<Terminal>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
         
-        modelBuilder.Entity<Inventory>().HasQueryFilter(i => (_tenant.TenantId == null || i.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<Inventory>().HasQueryFilter(i => (_tenant.TenantId == null || i.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Transaction>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
         modelBuilder.Entity<TransactionItem>().HasQueryFilter(i => (_tenant.TenantId == null || i.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.Transaction.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Payment>().HasQueryFilter(p => (_tenant.TenantId == null || p.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || p.Transaction.StoreId == _tenant.StoreId));
@@ -113,6 +114,10 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<InventoryOrderItem>().HasQueryFilter(i =>
             (_tenant.TenantId == null || i.Order.TenantId == _tenant.TenantId) &&
             (_tenant.StoreId == null || i.Order.DestinationStoreId == _tenant.StoreId || i.Order.SourceStoreId == _tenant.StoreId));
+            
+        modelBuilder.Entity<StockMovement>().HasQueryFilter(m =>
+            (_tenant.TenantId == null || m.TenantId == _tenant.TenantId) &&
+            (_tenant.StoreId == null || m.StoreId == _tenant.StoreId));
 
         // ── Npgsql ENUM MAPPINGS ─────────────────────────────────────────────
         modelBuilder.HasPostgresEnum<TerminalStatus>();

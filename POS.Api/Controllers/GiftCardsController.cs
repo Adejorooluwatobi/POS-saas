@@ -41,6 +41,7 @@ public class GiftCardsController : ControllerBase
 
     /// <summary>Issues a new gift card for the current tenant.</summary>
     [HttpPost("issue")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Issue([FromBody] IssueGiftCardDto dto)
     {
         var result = await _mediator.Send(new IssueGiftCardCommand(dto));
@@ -48,6 +49,7 @@ public class GiftCardsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateGiftCardDto dto)
     {
         await _mediator.Send(new UpdateGiftCardCommand(id, dto));
@@ -56,6 +58,7 @@ public class GiftCardsController : ControllerBase
 
     /// <summary>Redeems an amount from a gift card by card number.</summary>
     [HttpPost("redeem")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Redeem([FromBody] RedeemGiftCardDto dto)
     {
         var result = await _mediator.Send(new RedeemGiftCardCommand(dto));
@@ -63,6 +66,7 @@ public class GiftCardsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteGiftCardCommand(id));

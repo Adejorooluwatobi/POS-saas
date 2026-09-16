@@ -10,6 +10,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
     private readonly IInventoryOrderRepository _orderRepository;
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
+    private readonly IStockMovementRepository _movementRepository;
     private readonly IUnitOfWork _uow;
     private readonly ITenantContext _tenantContext;
     private readonly IEmailService _emailService;
@@ -20,6 +21,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
         IInventoryOrderRepository orderRepository,
         IInventoryRepository inventoryRepository,
         IProductVariantRepository variantRepository,
+        IStockMovementRepository movementRepository,
         IUnitOfWork uow,
         ITenantContext tenantContext,
         IEmailService emailService,
@@ -29,6 +31,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
         _orderRepository = orderRepository;
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
+        _movementRepository = movementRepository;
         _uow = uow;
         _tenantContext = tenantContext;
         _emailService = emailService;
@@ -58,14 +61,25 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                 var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
                 if (inventory == null || inventory.QuantityOnHand < qtyInBaseUnits)
                 {
-                    // Optionally throw error if not enough stock at source
-                    // throw new InvalidOperationException($"Insufficient stock for {variant.Sku} at source store.");
+                    var available = inventory?.QuantityOnHand ?? 0;
+                    throw new InvalidOperationException($"Insufficient stock for {variant.Sku} at source store. You only have {available} available.");
                 }
 
-                if (inventory != null)
+                inventory.QuantityOnHand -= qtyInBaseUnits;
+                
+                var movement = new Domain.Entities.StockMovement
                 {
-                    inventory.QuantityOnHand -= qtyInBaseUnits;
-                }
+                    TenantId = order.TenantId,
+                    StoreId = order.SourceStoreId.Value,
+                    VariantId = baseVariantId,
+                    QuantityChange = -qtyInBaseUnits,
+                    BalanceAfter = inventory.QuantityOnHand,
+                    Reason = $"Dispatched Order {order.OrderNumber}",
+                    ReferenceId = order.Id,
+                    ReferenceType = "InventoryOrder"
+                };
+                
+                await _movementRepository.AddAsync(movement);
             }
         }
 

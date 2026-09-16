@@ -30,6 +30,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
     {
         var result = await _mediator.Send(new CreateCategoryCommand(dto));
@@ -37,6 +38,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryDto dto)
     {
         await _mediator.Send(new UpdateCategoryCommand(id, dto));
@@ -44,6 +46,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteCategoryCommand(id));

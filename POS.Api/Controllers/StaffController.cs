@@ -37,7 +37,7 @@ public class StaffController : ControllerBase
         => Ok(await _mediator.Send(new POS.Application.Queries.Staff.GetStats.GetStaffStatsQuery(id, year, month)));
 
     [HttpPost]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateStaffDto dto)
     {
         var result = await _mediator.Send(new CreateStaffCommand(dto));
@@ -45,6 +45,7 @@ public class StaffController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStaffDto dto)
     {
         await _mediator.Send(new UpdateStaffCommand(id, dto));
@@ -52,7 +53,7 @@ public class StaffController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteStaffCommand(id));

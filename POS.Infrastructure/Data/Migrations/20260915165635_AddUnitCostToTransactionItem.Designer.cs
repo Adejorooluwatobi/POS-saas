@@ -3,18 +3,21 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using POS.Infrastructure.Data;
 
 #nullable disable
 
-namespace POS.Infrastructure.Migrations
+namespace POS.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(RetailOsDbContext))]
-    partial class RetailOsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260915165635_AddUnitCostToTransactionItem")]
+    partial class AddUnitCostToTransactionItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1153,48 +1156,6 @@ namespace POS.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("POS.Domain.Entities.StockMovement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("BalanceAfter")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("QuantityChange")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reason")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("ReferenceId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ReferenceType")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("StoreId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("VariantId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StoreId");
-
-                    b.HasIndex("VariantId");
-
-                    b.ToTable("StockMovements");
-                });
-
             modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1468,7 +1429,7 @@ namespace POS.Infrastructure.Migrations
                             IsActive = true,
                             IsVerified = false,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 16, 19, 19, 12, 292, DateTimeKind.Unspecified).AddTicks(2919), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 15, 16, 56, 32, 441, DateTimeKind.Unspecified).AddTicks(5484), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 
@@ -2207,25 +2168,6 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Store");
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("POS.Domain.Entities.StockMovement", b =>
-                {
-                    b.HasOne("POS.Domain.Entities.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("POS.Domain.Entities.ProductVariant", "Variant")
-                        .WithMany()
-                        .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Store");
-
-                    b.Navigation("Variant");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>

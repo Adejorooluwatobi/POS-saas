@@ -24,6 +24,7 @@ public class CouponsController : ControllerBase
 
     /// <summary>Creates a new coupon under a promotion.</summary>
     [HttpPost("{promotionId:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create(Guid promotionId, [FromBody] CreateCouponDto dto)
     {
         var result = await _mediator.Send(new CreateCouponCommand(promotionId, dto));
@@ -32,6 +33,7 @@ public class CouponsController : ControllerBase
 
     /// <summary>Updates coupon max-uses, active flag, or expiry.</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCouponDto dto)
     {
         await _mediator.Send(new UpdateCouponCommand(id, dto));
@@ -40,6 +42,7 @@ public class CouponsController : ControllerBase
 
     /// <summary>Deactivates a coupon (soft delete — coupon may be referenced in past transactions).</summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Deactivate(Guid id)
     {
         await _mediator.Send(new DeleteCouponCommand(id));

@@ -26,7 +26,11 @@ public class InventoryOrdersController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
-        => Ok(await _mediator.Send(new GetInventoryOrdersPagedQuery(page, size)));
+    {
+        var tenant = HttpContext.RequestServices.GetRequiredService<POS.Domain.Interfaces.ITenantContext>();
+        Console.WriteLine($"[InventoryOrdersController] User: {tenant.UserName}, Role: {tenant.SystemRole}, StoreId: {tenant.StoreId}, TenantId: {tenant.TenantId}");
+        return Ok(await _mediator.Send(new GetInventoryOrdersPagedQuery(page, size)));
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
@@ -36,7 +40,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateInventoryOrderDto dto)
     {
         var result = await _mediator.Send(new CreateInventoryOrderCommand(dto));
@@ -44,6 +48,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/dispatch")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Dispatch(Guid id)
     {
         await _mediator.Send(new DispatchInventoryOrderCommand(id));
@@ -51,6 +56,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/receive")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Receive(Guid id, [FromBody] ReceiveInventoryOrderDto dto)
     {
         await _mediator.Send(new ReceiveInventoryOrderCommand(id, dto));
@@ -58,6 +64,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/approve")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Approve(Guid id)
     {
         await _mediator.Send(new ApproveInventoryOrderCommand(id));
@@ -65,6 +72,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/dispute")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Dispute(Guid id, [FromBody] DisputeOrderDto dto)
     {
         await _mediator.Send(new DisputeInventoryOrderCommand(id, dto));
@@ -72,7 +80,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/resolve")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Resolve(Guid id, [FromBody] ResolveDisputeDto dto)
     {
         await _mediator.Send(new ResolveDisputeCommand(id, dto));
@@ -80,6 +88,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/accept-referral")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> AcceptReferral(Guid id)
     {
         await _mediator.Send(new AcceptReferralCommand(id));
@@ -87,6 +96,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/decline-referral")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> DeclineReferral(Guid id, [FromQuery] string reason)
     {
         await _mediator.Send(new DeclineReferralCommand(id, reason));
@@ -94,6 +104,7 @@ public class InventoryOrdersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Cancel(Guid id)
     {
         await _mediator.Send(new CancelInventoryOrderCommand(id));

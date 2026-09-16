@@ -1,8 +1,13 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using POS.Domain.Common;
 using POS.Domain.Entities;
 using POS.Domain.Repositories;
 using POS.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using POS.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace POS.Infrastructure.Repositories;
 
@@ -34,8 +39,18 @@ public class InventoryRepository : GenericRepository<Inventory>, IInventoryRepos
 
     public async Task<Inventory?> GetByVariantAndStoreAsync(Guid variantId, Guid storeId)
     {
-        return await _context.Inventories
+        var tenantContext = _context.GetService<POS.Domain.Interfaces.ITenantContext>();
+        
+        var result = await _context.Inventories
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(i => i.VariantId == variantId && i.StoreId == storeId);
+            
+        if (result != null && result.TenantId == Guid.Empty && tenantContext.TenantId.HasValue)
+        {
+            result.TenantId = tenantContext.TenantId.Value;
+        }
+        
+        return result;
     }
 
     public async Task<IEnumerable<Inventory>> GetLowStockAlertsAsync(Guid storeId)

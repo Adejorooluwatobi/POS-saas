@@ -7,6 +7,7 @@ public class InventoryDto
     public string VariantName { get; set; } = string.Empty;
     public string Sku { get; set; } = string.Empty;
     public Guid StoreId { get; set; }
+    public string StoreName { get; set; } = string.Empty;
     public int QuantityOnHand { get; set; }
     public int QuantityReserved { get; set; }
     public int QuantityAvailable { get; set; }

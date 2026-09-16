@@ -13,6 +13,7 @@ public class TransactionItem : BaseEntity
     public required decimal Quantity { get; set; }
     public required decimal UnitPrice { get; set; }
     public required decimal OriginalPrice { get; set; }
+    public decimal UnitCost { get; set; } = 0m;
     public decimal DiscountAmount { get; set; } = 0m;
     public decimal TaxRate { get; set; } = 0m;
     public decimal TaxAmount { get; set; } = 0m;

@@ -122,12 +122,13 @@ public class MappingProfile : Profile
 
         // ── Inventory ─────────────────────────────────────────────────────
         CreateMap<Inventory, InventoryDto>()
-            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Product.Name))
-            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.Name : string.Empty))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant != null ? s.Variant.Sku : string.Empty))
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store != null ? s.Store.Name : string.Empty))
             .ForMember(d => d.QuantityAvailable, o => o.MapFrom(s => s.QuantityAvailable))
-            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product.SinglesPerRoll))
-            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product.RollsPerPack))
-            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product.SinglesPerPack));
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
+            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
         CreateMap<CreateInventoryDto, Inventory>();
         CreateMap<UpdateInventoryDto, Inventory>()
             .ForMember(d => d.Id, o => o.Ignore())

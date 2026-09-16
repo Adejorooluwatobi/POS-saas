@@ -30,6 +30,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Create([FromBody] CreateCustomerDto dto)
     {
         var result = await _mediator.Send(new CreateCustomerCommand(dto));
@@ -37,6 +38,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerDto dto)
     {
         await _mediator.Send(new UpdateCustomerCommand(id, dto));
@@ -44,6 +46,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteCustomerCommand(id));

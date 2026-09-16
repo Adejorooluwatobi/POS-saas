@@ -39,6 +39,7 @@ public class TerminalsController : ControllerBase
 
     /// <summary>Registers a new terminal under a store.</summary>
     [HttpPost("{storeId:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create(Guid storeId, [FromBody] CreateTerminalDto dto)
     {
         var result = await _mediator.Send(new CreateTerminalCommand(storeId, dto));
@@ -57,6 +58,7 @@ public class TerminalsController : ControllerBase
 
     /// <summary>Updates terminal label, IP address, or status.</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTerminalDto dto)
     {
         await _mediator.Send(new UpdateTerminalCommand(id, dto));
@@ -64,6 +66,7 @@ public class TerminalsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteTerminalCommand(id));

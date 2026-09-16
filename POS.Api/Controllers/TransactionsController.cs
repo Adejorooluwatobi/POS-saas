@@ -19,8 +19,8 @@ public class TransactionsController : ControllerBase
     public TransactionsController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
-    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
-        => Ok(await _mediator.Send(new GetTransactionsPagedQuery(page, size)));
+    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20, [FromQuery] Guid? cashierId = null)
+        => Ok(await _mediator.Send(new GetTransactionsPagedQuery(page, size, cashierId)));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
@@ -30,13 +30,23 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Create([FromBody] CreateTransactionDto dto)
     {
         var result = await _mediator.Send(new CreateTransactionCommand(dto));
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    [HttpPost("sync")]
+    [Authorize(Policy = "TenantStaffOnly")]
+    public async Task<IActionResult> SyncOffline([FromBody] POS.Application.Commands.Transaction.SyncOfflineTransactions.SyncOfflineTransactionsCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return Ok(result);
+    }
+
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionDto dto)
     {
         await _mediator.Send(new UpdateTransactionCommand(id, dto));
@@ -44,6 +54,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteTransactionCommand(id));
