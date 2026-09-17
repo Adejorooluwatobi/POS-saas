@@ -280,6 +280,9 @@ public class MappingProfile : Profile
             .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
             .ForMember(d => d.ConversionFactor, o => o.MapFrom(s => 
                 (s.Variant.ConversionFactor > 1) ? s.Variant.ConversionFactor : 
-                (s.Variant.Product != null && s.Variant.Product.SinglesPerPack > 1 ? (decimal)s.Variant.Product.SinglesPerPack.Value : 1m)));
+                (s.Variant.Product != null && s.Variant.Product.SinglesPerPack > 1 ? (decimal)s.Variant.Product.SinglesPerPack.Value : 1m)))
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
+            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
     }
 }

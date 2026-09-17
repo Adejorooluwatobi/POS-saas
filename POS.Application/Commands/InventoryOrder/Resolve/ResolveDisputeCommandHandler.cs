@@ -73,7 +73,7 @@ public class ResolveDisputeCommandHandler : IRequestHandler<ResolveDisputeComman
 
             // Update item record with the agreed quantities, but leave actual inventory & requisition updates to final approval.
             item.QuantityReceived = finalAgreedQty;
-            item.QuantityReceivedBaseUnits = (int)(finalAgreedQty * variant.ConversionFactor); // Fallback assumption, UI should provide this ideally
+            item.QuantityReceivedBaseUnits = finalAgreedQty; // Frontend sends base units
             item.DamageNotes = string.IsNullOrWhiteSpace(itemDto.ResolutionReason) ? "Damaged in Transit" : itemDto.ResolutionReason;
 
             // Update item record

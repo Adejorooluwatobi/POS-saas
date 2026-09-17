@@ -34,4 +34,7 @@ public class StockRequisitionItemDto
     public int QuantityRequested { get; set; }
     public int QuantityFulfilled { get; set; }
     public decimal ConversionFactor { get; set; }
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
 }

@@ -51,6 +51,7 @@ public class OfflineTransactionItemDto
     public decimal TaxRate { get; set; }
     public decimal TaxAmount { get; set; }
     public decimal LineTotal { get; set; }
+    public decimal? BaseQuantity { get; set; }
 }
 
 public class OfflinePaymentDto

@@ -56,7 +56,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                     ?? throw new KeyNotFoundException($"Variant {item.VariantId} not found.");
                 
                 var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
-                var qtyInBaseUnits = (int)(item.QuantityOrdered * variant.ConversionFactor);
+                var qtyInBaseUnits = item.QuantityOrdered;
 
                 var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
                 if (inventory == null || inventory.QuantityOnHand < qtyInBaseUnits)

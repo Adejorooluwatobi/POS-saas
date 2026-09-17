@@ -108,7 +108,9 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             if (variant != null)
             {
                 var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
-                var qtyInBaseUnits = (int)(itemDto.Quantity * variant.ConversionFactor);
+                var qtyInBaseUnits = itemDto.BaseQuantity.HasValue 
+                    ? (int)itemDto.BaseQuantity.Value 
+                    : (int)(itemDto.Quantity * variant.ConversionFactor);
 
                 var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, request.Dto.StoreId);
                 if (inventory != null)

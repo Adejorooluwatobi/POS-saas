@@ -101,7 +101,8 @@ public class SyncOfflineTransactionsCommandHandler : IRequestHandler<SyncOffline
                             
                             if (inventory != null)
                             {
-                                inventory.QuantityOnHand -= (int)itemDto.Quantity;
+                                var deduction = itemDto.BaseQuantity.HasValue ? (int)itemDto.BaseQuantity.Value : (int)itemDto.Quantity;
+                                inventory.QuantityOnHand -= deduction;
                                 _inventoryRepository.Update(inventory);
                             }
                             else
