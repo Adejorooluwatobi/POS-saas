@@ -33,4 +33,5 @@ public class StockRequisitionItemDto
     public string Sku { get; set; } = null!;
     public int QuantityRequested { get; set; }
     public int QuantityFulfilled { get; set; }
+    public decimal ConversionFactor { get; set; }
 }

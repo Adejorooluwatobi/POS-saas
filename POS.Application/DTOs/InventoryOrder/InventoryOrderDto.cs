@@ -48,4 +48,10 @@ public class InventoryOrderItemDto
     public int? QuantityDamaged { get; set; }
     public string? DamageNotes { get; set; }
     public string? DamagePhotoUrl { get; set; }
+    
+    // Packaging info for UI
+    public decimal ConversionFactor { get; set; }
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
 }

@@ -36,6 +36,7 @@ public class InventoryOrderRepository : GenericRepository<InventoryOrder>, IInve
             .Include(o => o.ResolvedBy)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Variant)
+                    .ThenInclude(v => v.Product)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
 
@@ -60,6 +61,7 @@ public class InventoryOrderRepository : GenericRepository<InventoryOrder>, IInve
             .Include(o => o.ResolvedBy)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Variant)
+                    .ThenInclude(v => v.Product)
             .OrderByDescending(o => o.CreatedAt)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)

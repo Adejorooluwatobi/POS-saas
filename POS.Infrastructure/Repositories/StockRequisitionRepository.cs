@@ -23,6 +23,10 @@ public class StockRequisitionRepository : GenericRepository<StockRequisition>, I
             .Include(r => r.ReviewedBy)
             .Include(r => r.Items)
                 .ThenInclude(i => i.Variant)
+            .Include(r => r.FulfillmentOrders)
+                .ThenInclude(o => o.SourceStore)
+            .Include(r => r.FulfillmentOrders)
+                .ThenInclude(o => o.DestinationStore)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 

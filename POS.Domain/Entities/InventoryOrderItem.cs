@@ -9,6 +9,7 @@ public class InventoryOrderItem : BaseEntity
     public required Guid VariantId { get; set; }
     public int QuantityOrdered { get; set; }
     public int? QuantityReceived { get; set; }
+    public int? QuantityReceivedBaseUnits { get; set; }
     public int? QuantityDamaged { get; set; }
     public string? DamageNotes { get; set; }
     public string? DamagePhotoUrl { get; set; }

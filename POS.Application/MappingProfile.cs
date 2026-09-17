@@ -260,8 +260,12 @@ public class MappingProfile : Profile
             .ForMember(d => d.ResolvedByName, o => o.MapFrom(s => s.ResolvedBy != null ? s.ResolvedBy.FullName : null));
 
         CreateMap<InventoryOrderItem, InventoryOrderItemDto>()
-            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Sku)) // Or variant name if it has one
-            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku));
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.Name : s.Variant.Sku))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.ConversionFactor, o => o.MapFrom(s => s.Variant.ConversionFactor))
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
+            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
 
         // ── StockRequisition ──────────────────────────────────────────────
         CreateMap<StockRequisition, StockRequisitionDto>()
@@ -270,7 +274,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.ReviewedByName, o => o.MapFrom(s => s.ReviewedBy != null ? s.ReviewedBy.FullName : null));
 
         CreateMap<StockRequisitionItem, StockRequisitionItemDto>()
-            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Sku))
-            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku));
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.Name : s.Variant.Sku))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.ConversionFactor, o => o.MapFrom(s => s.Variant.ConversionFactor));
     }
 }

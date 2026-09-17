@@ -39,8 +39,8 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
         var order = await _orderRepository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException("Order not found.");
 
-        if (order.Status != InventoryOrderStatus.Received)
-            throw new InvalidOperationException("Order must be received to be approved.");
+        if (order.Status != InventoryOrderStatus.Received && order.Status != InventoryOrderStatus.Resolved)
+            throw new InvalidOperationException("Order must be received or resolved to be approved.");
 
         // Verification: only StoreManager can approve (based on user request)
         if (_tenantContext.SystemRole != "StoreManager" && !_tenantContext.IsSuperAdmin)
@@ -56,7 +56,10 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
 
             var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
             var receivedQty = item.QuantityReceived ?? 0;
-            var qtyInBaseUnits = (int)(receivedQty * variant.ConversionFactor);
+            
+            // Prefer the explicit base units count if provided (e.g. from mixed UOM receiving)
+            var qtyInBaseUnits = item.QuantityReceivedBaseUnits ?? 
+                                 (int)(receivedQty * variant.ConversionFactor);
 
             var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.DestinationStoreId);
             if (inventory == null)
@@ -76,7 +79,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 inventory.QuantityOnHand += qtyInBaseUnits;
             }
 
-            // Create Stock Movement log
+            // Create Stock Movement log for received goods
             var movement = new Domain.Entities.StockMovement
             {
                 TenantId = order.TenantId,
@@ -89,6 +92,29 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 ReferenceType = "InventoryOrder"
             };
             await _movementRepository.AddAsync(movement);
+
+            // Log shortage as Shrinkage/Damage
+            var originalOrderedQty = item.QuantityOrdered;
+            var shortage = originalOrderedQty - receivedQty;
+            
+            if (shortage > 0)
+            {
+                var shortageInBaseUnits = (int)(shortage * variant.ConversionFactor);
+                var reason = string.IsNullOrWhiteSpace(item.DamageNotes) ? "Shortage/Damage" : item.DamageNotes;
+                
+                var shortageMovement = new Domain.Entities.StockMovement
+                {
+                    TenantId = order.TenantId,
+                    StoreId = order.DestinationStoreId,
+                    VariantId = baseVariantId,
+                    QuantityChange = -shortageInBaseUnits,
+                    BalanceAfter = inventory.QuantityOnHand, // Doesn't deduct from *current* stock because we never added it. This just records the event.
+                    Reason = $"Shrinkage: {reason} (Order {order.OrderNumber})",
+                    ReferenceId = order.Id,
+                    ReferenceType = "Shrinkage"
+                };
+                await _movementRepository.AddAsync(shortageMovement);
+            }
 
             // Update Requisition fulfillment if linked
             if (order.StockRequisitionId.HasValue)
