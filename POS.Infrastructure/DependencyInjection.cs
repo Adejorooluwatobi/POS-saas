@@ -20,7 +20,6 @@ public static class DependencyInjection
         services.AddSingleton<IReceiptNumberService, ReceiptNumberService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IGiftCardNumberGenerator, GiftCardNumberGenerator>();
-        services.AddSingleton<IEncryptionService, AesEncryptionService>();
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 

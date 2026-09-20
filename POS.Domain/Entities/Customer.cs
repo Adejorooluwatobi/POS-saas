@@ -19,14 +19,6 @@ public class Customer : AuditableEntity
     public CustomerTier Tier { get; set; } = CustomerTier.Bronze;
     public bool IsActive { get; set; } = true;
 
-    // Identity & Liveness Verification
-    public IdentityType IdentityType { get; set; } = IdentityType.None;
-    public string? EncryptedIdentityNumber { get; set; }
-    public string? PhotoUrl { get; set; }
-    public bool IsIdentityVerified { get; set; } = false;
-    public DateTimeOffset? LivenessVerifiedAt { get; set; }
-    public string? LivenessAuditLog { get; set; }
-
     // Navigation
     public Tenant Tenant { get; set; } = null!;
     public ICollection<Transaction> Transactions { get; set; } = [];
