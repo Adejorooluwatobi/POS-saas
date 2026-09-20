@@ -24,4 +24,12 @@ public class AuditLogsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int size = 50)
         => Ok(await _mediator.Send(new GetAuditLogsPagedQuery(tenantId, page, size)));
+
+    /// <summary>Returns a specific audit log entry by its ID.</summary>
+    [HttpGet("entry/{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _mediator.Send(new POS.Application.Queries.AuditLog.GetById.GetAuditLogByIdQuery(id));
+        return result is null ? NotFound() : Ok(result);
+    }
 }

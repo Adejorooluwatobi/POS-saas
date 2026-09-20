@@ -228,12 +228,26 @@ public class MappingProfile : Profile
             .ForMember(d => d.SingleUsePerCustomer, o => o.Ignore());
 
         // ── GiftCard ──────────────────────────────────────────────────────
-        CreateMap<GiftCard, GiftCardDto>();
+        CreateMap<GiftCard, GiftCardDto>()
+            .ForMember(d => d.CustomerName, o => o.MapFrom(s => s.Customer != null ? s.Customer.FirstName + " " + s.Customer.LastName : null))
+            .ForMember(d => d.CustomerPhone, o => o.MapFrom(s => s.Customer != null ? s.Customer.Phone : null))
+            .ForMember(d => d.CustomerEmail, o => o.MapFrom(s => s.Customer != null ? s.Customer.Email : null))
+            .ForMember(d => d.CustomerLoyaltyCardNo, o => o.MapFrom(s => s.Customer != null ? s.Customer.LoyaltyCardNo : null))
+            .ForMember(d => d.CustomerPointsBalance, o => o.MapFrom(s => s.Customer != null ? (int?)s.Customer.PointsBalance : null));
         CreateMap<IssueGiftCardDto, GiftCard>()
             .ForMember(d => d.TenantId, o => o.Ignore())
             .ForMember(d => d.Balance, o => o.Ignore())
             .ForMember(d => d.IsActive, o => o.Ignore())
-            .ForMember(d => d.IssuedAt, o => o.Ignore());
+            .ForMember(d => d.IssuedAt, o => o.Ignore())
+            .ForMember(d => d.Customer, o => o.Ignore())
+            .ForMember(d => d.Transactions, o => o.Ignore());
+
+        CreateMap<GiftCardTransaction, GiftCardTransactionDto>()
+            .ForMember(d => d.CardNumber, o => o.MapFrom(s => s.GiftCard != null ? s.GiftCard.CardNumber : ""))
+            .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.ToString()))
+            .ForMember(d => d.PaymentMethod, o => o.MapFrom(s => s.Method.ToString()))
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store != null ? s.Store.Name : null))
+            .ForMember(d => d.StaffName, o => o.MapFrom(s => s.Staff != null ? s.Staff.FullName : null));
 
         // ── TenantSubscription ────────────────────────────────────────────
         CreateMap<TenantSubscription, TenantSubscriptionDto>()

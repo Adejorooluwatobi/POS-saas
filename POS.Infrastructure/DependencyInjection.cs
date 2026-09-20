@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IReceiptNumberService, ReceiptNumberService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IGiftCardNumberGenerator, GiftCardNumberGenerator>();
+        services.AddSingleton<IEncryptionService, AesEncryptionService>();
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
@@ -39,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<ITerminalRepository, TerminalRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<IGiftCardRepository, GiftCardRepository>();
+        services.AddScoped<IGiftCardTransactionRepository, GiftCardTransactionRepository>();
         services.AddScoped<ITenantSubscriptionRepository, TenantSubscriptionRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IStoreProductOverrideRepository, StoreProductOverrideRepository>();
@@ -46,6 +48,8 @@ public static class DependencyInjection
         services.AddScoped<IInventoryOrderRepository, InventoryOrderRepository>();
         services.AddScoped<IStockRequisitionRepository, StockRequisitionRepository>();
         services.AddScoped<IStockMovementRepository, StockMovementRepository>();
+        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<ILoyaltyLedgerRepository, LoyaltyLedgerRepository>();
 
         return services;
     }

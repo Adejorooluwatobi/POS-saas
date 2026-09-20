@@ -11,10 +11,19 @@ public class CustomerRepository : GenericRepository<Customer>, ICustomerReposito
 {
     public CustomerRepository(RetailOsDbContext context) : base(context) { }
 
+    public override async Task<Customer?> GetByIdAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(c => c.GiftCards)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
     public async Task<Customer?> GetByEmailOrPhoneAsync(string emailOrPhone)
     {
-        return await _dbSet.FirstOrDefaultAsync(c => 
-            (string.Equals(c.Email, emailOrPhone) || string.Equals(c.Phone, emailOrPhone))
-            && c.IsActive);
+        return await _dbSet
+            .Include(c => c.GiftCards)
+            .FirstOrDefaultAsync(c => 
+                (string.Equals(c.Email, emailOrPhone) || string.Equals(c.Phone, emailOrPhone))
+                && c.IsActive);
     }
 }

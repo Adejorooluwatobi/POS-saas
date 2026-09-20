@@ -54,6 +54,7 @@ public class RetailOsDbContext : DbContext
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<StockRequisitionItem> StockRequisitionItems => Set<StockRequisitionItem>();
     public DbSet<InventoryBatch> InventoryBatches => Set<InventoryBatch>();
+    public DbSet<GiftCardTransaction> GiftCardTransactions => Set<GiftCardTransaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +97,7 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<TillSession>().HasQueryFilter(s => (_tenant.TenantId == null || s.Staff.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.Terminal.StoreId == _tenant.StoreId));
         
         modelBuilder.Entity<LoyaltyLedgerEntry>().HasQueryFilter(l => _tenant.TenantId == null || l.Customer.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<GiftCardTransaction>().HasQueryFilter(t => _tenant.TenantId == null || t.TenantId == _tenant.TenantId);
         
         modelBuilder.Entity<Coupon>().HasQueryFilter(c => _tenant.TenantId == null || c.Promotion.TenantId == _tenant.TenantId);
 
