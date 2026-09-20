@@ -12,7 +12,7 @@ namespace POS.Api.Controllers;
 
 [ApiController]
 [Route("api/stores")]
-[Authorize(Policy = "AdminOnly")]
+[Authorize]
 public class StoresController : ControllerBase
 {
     private readonly IMediator _mediator;

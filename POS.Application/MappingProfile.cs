@@ -25,7 +25,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.Slug, o => o.Ignore());
 
         // ── Store ─────────────────────────────────────────────────────────
-        CreateMap<Store, StoreDto>();
+        CreateMap<Store, StoreDto>()
+            .ForMember(d => d.TenantEmail, o => o.MapFrom(s => s.Tenant != null ? s.Tenant.ContactEmail : null));
         CreateMap<CreateStoreDto, Store>()
             .ForMember(d => d.TenantId, o => o.Ignore());
         CreateMap<UpdateStoreDto, Store>()
@@ -203,7 +204,11 @@ public class MappingProfile : Profile
 
         // ── Terminal ──────────────────────────────────────────────────────
         CreateMap<Terminal, TerminalDto>()
-            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store.Name));
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store.Name))
+            .ForMember(d => d.StoreAddress, o => o.MapFrom(s => s.Store.Address))
+            .ForMember(d => d.StoreCity, o => o.MapFrom(s => s.Store.City))
+            .ForMember(d => d.StorePhone, o => o.MapFrom(s => s.Store.Phone))
+            .ForMember(d => d.TenantEmail, o => o.MapFrom(s => s.Store != null && s.Store.Tenant != null ? s.Store.Tenant.ContactEmail : null));
         CreateMap<CreateTerminalDto, Terminal>()
             .ForMember(d => d.TerminalCode, o => o.Ignore())
             .ForMember(d => d.StoreId, o => o.Ignore())
