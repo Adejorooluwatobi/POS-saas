@@ -72,7 +72,10 @@ public class ApproveStockRequisitionCommandHandler : IRequestHandler<ApproveStoc
                 {
                     InventoryOrderId = Guid.Empty,
                     VariantId = i.VariantId,
-                    QuantityOrdered = i.Quantity
+                    QuantityOrdered = i.Quantity,
+                    BatchNumber = i.BatchNumber,
+                    ProductionDate = i.ProductionDate,
+                    ExpiryDate = i.ExpiryDate
                 }).ToList()
             };
 

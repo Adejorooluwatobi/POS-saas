@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AutoMapper;
+using POS.Domain.Common;
 using POS.Domain.Entities;
 using POS.Application.DTOs;
 using POS.Application.DTOs.InventoryOrder;
@@ -129,6 +130,7 @@ public class MappingProfile : Profile
             .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
             .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
             .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
+        CreateMap<AggregatedInventory, InventoryDto>();
         CreateMap<CreateInventoryDto, Inventory>();
         CreateMap<UpdateInventoryDto, Inventory>()
             .ForMember(d => d.Id, o => o.Ignore())

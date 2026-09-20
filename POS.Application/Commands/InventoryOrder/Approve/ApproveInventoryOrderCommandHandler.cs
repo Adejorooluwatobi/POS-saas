@@ -79,6 +79,28 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 inventory.QuantityOnHand += qtyInBaseUnits;
             }
 
+            if (!string.IsNullOrWhiteSpace(item.BatchNumber) || item.ExpiryDate.HasValue)
+            {
+                var batch = new Domain.Entities.InventoryBatch
+                {
+                    TenantId = order.TenantId,
+                    InventoryId = inventory.Id,
+                    VariantId = baseVariantId,
+                    StoreId = order.DestinationStoreId,
+                    BatchNumber = !string.IsNullOrWhiteSpace(item.BatchNumber) 
+                        ? item.BatchNumber 
+                        : $"LOT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4].ToUpper()}",
+                    ProductionDate = item.ProductionDate,
+                    ExpiryDate = item.ExpiryDate,
+                    QuantityOnHand = qtyInBaseUnits,
+                    QuantityReserved = 0,
+                    ExpiryAlertPercentage = 30,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                };
+                inventory.Batches.Add(batch);
+            }
+
             // Create Stock Movement log for received goods
             var movement = new Domain.Entities.StockMovement
             {

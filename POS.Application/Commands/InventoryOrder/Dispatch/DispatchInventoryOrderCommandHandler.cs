@@ -84,7 +84,24 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
         }
 
         order.Status = InventoryOrderStatus.Dispatched;
-        order.DispatchedAt = DateTimeOffset.UtcNow;
+        order.DispatchedAt = request.Dto?.DispatchedAt ?? DateTimeOffset.UtcNow;
+        if (request.Dto != null)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Dto.DriverName))
+                order.DriverName = request.Dto.DriverName.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Dto.DriverPhone))
+                order.DriverPhone = request.Dto.DriverPhone.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Dto.VehiclePlateNumber))
+                order.VehiclePlateNumber = request.Dto.VehiclePlateNumber.Trim();
+            if (request.Dto.EstimatedDeliveryTime.HasValue)
+                order.EstimatedDeliveryTime = request.Dto.EstimatedDeliveryTime.Value;
+            if (!string.IsNullOrWhiteSpace(request.Dto.DispatchNotes))
+            {
+                order.Notes = string.IsNullOrWhiteSpace(order.Notes)
+                    ? request.Dto.DispatchNotes.Trim()
+                    : $"{order.Notes}\n[Dispatch Note]: {request.Dto.DispatchNotes.Trim()}";
+            }
+        }
 
         await _uow.SaveChangesAsync(cancellationToken);
 
@@ -102,6 +119,14 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                 $"<tr><td style='padding: 8px 0; border-bottom: 1px solid #F1F5F9;'>{i.Variant?.Sku ?? "Item"}</td>" +
                 $"<td style='padding: 8px 0; border-bottom: 1px solid #F1F5F9;'>{i.QuantityOrdered}</td></tr>"));
 
+            var logisticsDetails = "";
+            if (!string.IsNullOrWhiteSpace(order.DriverName))
+                logisticsDetails += $" Driver: {order.DriverName}" + (!string.IsNullOrWhiteSpace(order.DriverPhone) ? $" ({order.DriverPhone})" : "");
+            if (!string.IsNullOrWhiteSpace(order.VehiclePlateNumber))
+                logisticsDetails += $" | Vehicle Plate: {order.VehiclePlateNumber}";
+            if (order.EstimatedDeliveryTime.HasValue)
+                logisticsDetails += $" | Est. Delivery: {order.EstimatedDeliveryTime.Value:g}";
+
             foreach (var manager in managers)
             {
                 await _emailService.SendTemplatedEmailAsync(
@@ -111,7 +136,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                     new
                     {
                         Title = "New Inbound Shipment",
-                        Message = $"A new inventory order has been dispatched from {sourceStoreName} to your store ({destinationStore?.Name}). Please prepare to receive it.",
+                        Message = $"A new inventory order has been dispatched from {sourceStoreName} to your store ({destinationStore?.Name}).{logisticsDetails} Please prepare to receive it.",
                         OrderNumber = order.OrderNumber,
                         Status = "Dispatched",
                         SourceStore = sourceStoreName,

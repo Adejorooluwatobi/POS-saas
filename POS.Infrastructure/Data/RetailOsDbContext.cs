@@ -53,6 +53,7 @@ public class RetailOsDbContext : DbContext
     public DbSet<StockRequisition> StockRequisitions => Set<StockRequisition>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<StockRequisitionItem> StockRequisitionItems => Set<StockRequisitionItem>();
+    public DbSet<InventoryBatch> InventoryBatches => Set<InventoryBatch>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,6 +86,7 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<Terminal>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
         
         modelBuilder.Entity<Inventory>().HasQueryFilter(i => (_tenant.TenantId == null || i.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<InventoryBatch>().HasQueryFilter(b => (_tenant.TenantId == null || b.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || b.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Transaction>().HasQueryFilter(t => (_tenant.TenantId == null || t.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
         modelBuilder.Entity<TransactionItem>().HasQueryFilter(i => (_tenant.TenantId == null || i.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || i.Transaction.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Payment>().HasQueryFilter(p => (_tenant.TenantId == null || p.Transaction.Store.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || p.Transaction.StoreId == _tenant.StoreId));

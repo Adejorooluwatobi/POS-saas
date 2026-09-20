@@ -1,0 +1,22 @@
+using System;
+
+namespace POS.Domain.Common;
+
+public class AggregatedInventory
+{
+    public Guid Id { get; set; }
+    public Guid VariantId { get; set; }
+    public string VariantName { get; set; } = string.Empty;
+    public string Sku { get; set; } = string.Empty;
+    public Guid StoreId { get; set; }
+    public string StoreName { get; set; } = string.Empty;
+    public int QuantityOnHand { get; set; }
+    public int QuantityReserved { get; set; }
+    public int QuantityAvailable => QuantityOnHand - QuantityReserved;
+    public int ReorderPoint { get; set; }
+    public int ReorderQty { get; set; }
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+}

@@ -3,18 +3,21 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using POS.Infrastructure.Data;
 
 #nullable disable
 
-namespace POS.Infrastructure.Migrations
+namespace POS.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(RetailOsDbContext))]
-    partial class RetailOsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920101943_AddInventoryBatches")]
+    partial class AddInventoryBatches
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -555,15 +558,6 @@ namespace POS.Infrastructure.Migrations
                     b.Property<string>("DisputePhotoUrl")
                         .HasColumnType("text");
 
-                    b.Property<string>("DriverName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DriverPhone")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("EstimatedDeliveryTime")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("IsReferredTransfer")
                         .HasColumnType("boolean");
 
@@ -604,9 +598,6 @@ namespace POS.Infrastructure.Migrations
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
-
-                    b.Property<string>("VehiclePlateNumber")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1548,7 +1539,7 @@ namespace POS.Infrastructure.Migrations
                             IsActive = true,
                             IsVerified = false,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 20, 10, 42, 13, 84, DateTimeKind.Unspecified).AddTicks(5202), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 20, 10, 19, 37, 817, DateTimeKind.Unspecified).AddTicks(4081), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 

@@ -15,6 +15,7 @@ public class UpdateInventoryCommandHandlerTests
     private readonly IInventoryRepository _inventoryRepo;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly ITenantContext _tenantContext;
     private readonly UpdateInventoryCommandHandler _handler;
 
     public UpdateInventoryCommandHandlerTests()
@@ -22,11 +23,14 @@ public class UpdateInventoryCommandHandlerTests
         _inventoryRepo = Substitute.For<IInventoryRepository>();
         _uow = Substitute.For<IUnitOfWork>();
         _mapper = Substitute.For<IMapper>();
+        _tenantContext = Substitute.For<ITenantContext>();
+        _tenantContext.IsSuperAdmin.Returns(true);
         
         _handler = new UpdateInventoryCommandHandler(
             _inventoryRepo,
             _uow,
-            _mapper
+            _mapper,
+            _tenantContext
         );
     }
 

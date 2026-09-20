@@ -260,7 +260,7 @@ public class Program
             Log.Information("RetailOS POS Backend API started successfully in {Environment} mode.", app.Environment.EnvironmentName);
             app.Run();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex.GetType().Name != "HostAbortedException")
         {
             Log.Fatal(ex, "RetailOS POS Backend API terminated unexpectedly.");
         }

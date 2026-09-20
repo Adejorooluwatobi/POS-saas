@@ -49,9 +49,9 @@ public class InventoryOrdersController : ControllerBase
 
     [HttpPost("{id:guid}/dispatch")]
     [Authorize(Policy = "TenantStaffOnly")]
-    public async Task<IActionResult> Dispatch(Guid id)
+    public async Task<IActionResult> Dispatch(Guid id, [FromBody] DispatchInventoryOrderDto? dto = null)
     {
-        await _mediator.Send(new DispatchInventoryOrderCommand(id));
+        await _mediator.Send(new DispatchInventoryOrderCommand(id, dto));
         return NoContent();
     }
 
