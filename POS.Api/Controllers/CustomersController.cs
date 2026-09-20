@@ -5,6 +5,7 @@ using POS.Application.Commands.Customer.Create;
 using POS.Application.Commands.Customer.Delete;
 using POS.Application.Commands.Customer.Update;
 using POS.Application.DTOs;
+using POS.Application.Queries.Customer.GenerateLoyaltyNumber;
 using POS.Application.Queries.Customer.GetById;
 using POS.Application.Queries.Customer.GetPaged;
 
@@ -22,11 +23,26 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int size = 20)
         => Ok(await _mediator.Send(new GetCustomersPagedQuery(page, size)));
 
+    [HttpGet("generate-loyalty-no")]
+    [Authorize(Policy = "TenantStaffOnly")]
+    public async Task<IActionResult> GenerateLoyaltyNo([FromQuery] Guid? storeId = null)
+    {
+        var loyaltyCardNo = await _mediator.Send(new GenerateLoyaltyNumberQuery(storeId));
+        return Ok(new { loyaltyCardNo });
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetCustomerByIdQuery(id));
         return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpGet("{id:guid}/transactions")]
+    public async Task<IActionResult> GetTransactions(Guid id, [FromQuery] int page = 1, [FromQuery] int size = 20)
+    {
+        var result = await _mediator.Send(new POS.Application.Queries.Customer.GetTransactions.GetCustomerTransactionsQuery(id, page, size));
+        return Ok(result);
     }
 
     [HttpPost]

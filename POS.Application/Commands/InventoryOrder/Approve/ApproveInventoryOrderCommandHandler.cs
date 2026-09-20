@@ -98,7 +98,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow
                 };
-                inventory.Batches.Add(batch);
+                await _inventoryRepository.AddBatchAsync(batch);
             }
 
             // Create Stock Movement log for received goods
@@ -137,34 +137,45 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 };
                 await _movementRepository.AddAsync(shortageMovement);
             }
-
-            // Update Requisition fulfillment if linked
-            if (order.StockRequisitionId.HasValue)
-            {
-                var requisition = await _requisitionRepository.GetByIdAsync(order.StockRequisitionId.Value);
-                if (requisition != null)
-                {
-                    var reqItem = requisition.Items.FirstOrDefault(ri => ri.VariantId == item.VariantId);
-                    if (reqItem != null)
-                    {
-                        reqItem.QuantityFulfilled += receivedQty;
-                    }
-
-                    // Check if all items in requisition are fulfilled
-                    if (requisition.Items.All(ri => ri.QuantityFulfilled >= ri.QuantityRequested))
-                    {
-                        requisition.Status = RequisitionStatus.FullyFulfilled;
-                    }
-                    else
-                    {
-                        requisition.Status = RequisitionStatus.PartiallyFulfilled;
-                    }
-                }
-            }
         }
 
         order.Status = InventoryOrderStatus.Approved;
         order.ApprovedByStaffId = _tenantContext.UserId;
+
+        // Update Requisition fulfillment if linked
+        if (order.StockRequisitionId.HasValue)
+        {
+            var requisition = await _requisitionRepository.GetByIdAsync(order.StockRequisitionId.Value);
+            if (requisition != null)
+            {
+                foreach (var item in order.Items)
+                {
+                    var reqItem = requisition.Items.FirstOrDefault(ri => ri.VariantId == item.VariantId);
+                    if (reqItem != null)
+                    {
+                        reqItem.QuantityFulfilled += (item.QuantityReceived ?? 0);
+                    }
+                }
+
+                // Check all fulfillment orders for this requisition
+                var otherOrders = requisition.FulfillmentOrders.Where(o => o.Id != order.Id).ToList();
+                var anyInTransitOrPending = otherOrders.Any(o => 
+                    o.Status == InventoryOrderStatus.Draft || 
+                    o.Status == InventoryOrderStatus.Dispatched || 
+                    o.Status == InventoryOrderStatus.Received);
+                var anyDisputed = otherOrders.Any(o => o.Status == InventoryOrderStatus.Disputed);
+
+                if (!anyInTransitOrPending && !anyDisputed)
+                {
+                    // All planned deliveries have been received and finalized without dispute!
+                    requisition.Status = RequisitionStatus.FullyFulfilled;
+                }
+                else
+                {
+                    requisition.Status = RequisitionStatus.PartiallyFulfilled;
+                }
+            }
+        }
 
         await _uow.SaveChangesAsync(cancellationToken);
     }

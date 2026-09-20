@@ -29,4 +29,5 @@ public class CreateTransactionItemDto
     public string? GiftCardNumber { get; set; }
     public string? GiftCardPin { get; set; }
     public string? GiftCardOldPin { get; set; }
+    public bool? ActivateNow { get; set; }
 }

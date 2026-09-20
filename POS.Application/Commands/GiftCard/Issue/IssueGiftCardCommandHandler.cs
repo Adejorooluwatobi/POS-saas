@@ -43,7 +43,7 @@ public class IssueGiftCardCommandHandler : IRequestHandler<IssueGiftCardCommand,
         entity.TenantId = _tenantContext.TenantId.Value;
         entity.CardNumber = await _cardNumberGenerator.GenerateCardNumberAsync(entity.TenantId, cancellationToken);
         entity.Balance = request.Dto.InitialValue;
-        entity.IsActive = true;
+        entity.IsActive = request.Dto.ActivateNow;
         entity.IssuedAt = DateTimeOffset.UtcNow;
         entity.CustomerId = request.Dto.CustomerId;
 

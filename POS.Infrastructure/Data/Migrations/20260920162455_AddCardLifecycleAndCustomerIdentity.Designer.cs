@@ -3,18 +3,21 @@ using System;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using POS.Infrastructure.Data;
 
 #nullable disable
 
-namespace POS.Infrastructure.Migrations
+namespace POS.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(RetailOsDbContext))]
-    partial class RetailOsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920162455_AddCardLifecycleAndCustomerIdentity")]
+    partial class AddCardLifecycleAndCustomerIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -282,9 +285,6 @@ namespace POS.Infrastructure.Migrations
                     b.Property<bool>("IsIdentityVerified")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsSelfRegistered")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -312,12 +312,6 @@ namespace POS.Infrastructure.Migrations
                     b.Property<int>("PointsBalance")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("RegisteredByStaffId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("RegisteredStoreId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -329,12 +323,6 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("IsSelfRegistered");
-
-                    b.HasIndex("RegisteredByStaffId");
-
-                    b.HasIndex("RegisteredStoreId");
 
                     b.HasIndex("TenantId");
 
@@ -1668,7 +1656,7 @@ namespace POS.Infrastructure.Migrations
                             LoyaltyPointsEarnRate = 100m,
                             LoyaltyProgramEnabled = true,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 20, 19, 36, 49, 65, DateTimeKind.Unspecified).AddTicks(1405), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 20, 16, 24, 53, 711, DateTimeKind.Unspecified).AddTicks(3911), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 
@@ -2099,25 +2087,11 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.Customer", b =>
                 {
-                    b.HasOne("POS.Domain.Entities.Staff", "RegisteredByStaff")
-                        .WithMany()
-                        .HasForeignKey("RegisteredByStaffId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("POS.Domain.Entities.Store", "RegisteredStore")
-                        .WithMany()
-                        .HasForeignKey("RegisteredStoreId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Customers")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("RegisteredByStaff");
-
-                    b.Navigation("RegisteredStore");
 
                     b.Navigation("Tenant");
                 });

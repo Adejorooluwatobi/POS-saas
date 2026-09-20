@@ -10,6 +10,7 @@ public class GiftCardDto
     public Guid? IssuingStoreId { get; set; }
     public DateOnly? ExpiresAt { get; set; }
     public bool IsActive { get; set; }
+    public string? Notes { get; set; }
     public DateTimeOffset IssuedAt { get; set; }
 
     // Linked Customer Info
@@ -28,6 +29,7 @@ public class IssueGiftCardDto
     public Guid? IssuingStoreId { get; set; }
     public DateOnly? ExpiresAt { get; set; }
     public string? Pin { get; set; }
+    public bool ActivateNow { get; set; } = false;
 
     // Optional customer linking at issuance
     public Guid? CustomerId { get; set; }
@@ -85,4 +87,46 @@ public class TransferCardBalanceDto
 public class LinkGiftCardCustomerDto
 {
     public Guid CustomerId { get; set; }
+}
+
+public class SetGiftCardStatusDto
+{
+    public bool IsActive { get; set; }
+    public string? Reason { get; set; }
+}
+
+public class ReplaceLostGiftCardDto
+{
+    public string LostCardNumber { get; set; } = default!;
+    public string? NewCardNumber { get; set; }
+    public string? NewCardPin { get; set; }
+    public bool ActivateNewCard { get; set; } = true;
+    public string? Reason { get; set; } = "Reported lost/misplaced";
+    // Verification & Risk Controls
+    public string? VerificationPin { get; set; }
+    public bool BypassVerification { get; set; } = false;
+    public string? BypassReason { get; set; }
+}
+
+public class CustomerLinkCardDto
+{
+    public string CardNumber { get; set; } = default!;
+    public string Pin { get; set; } = default!;
+}
+
+public class CustomerTopUpCardDto
+{
+    public string CardNumber { get; set; } = default!;
+    public decimal Amount { get; set; }
+    public string PaymentReference { get; set; } = default!;
+    public string PaymentGateway { get; set; } = "Paystack";
+}
+
+public class CustomerTransferCardBalanceDto
+{
+    public string SourceCardNumber { get; set; } = default!;
+    public string SourcePin { get; set; } = default!;
+    public string DestinationCardNumber { get; set; } = default!;
+    public decimal Amount { get; set; }
+    public string? Notes { get; set; }
 }

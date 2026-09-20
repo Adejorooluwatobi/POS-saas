@@ -81,4 +81,36 @@ public static class MigrationExtensions
         dbContext.SaveChanges();
         Log.Information("SuperAdmin seeding completed successfully.");
     }
+
+    public static void SyncCustomerCardPoints(this IApplicationBuilder app)
+    {
+        using IServiceScope scope = app.ApplicationServices.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RetailOsDbContext>();
+
+        // Look for customer with email adejorooluwatobi1@gmail.com
+        var customer = dbContext.Customers.IgnoreQueryFilters().FirstOrDefault(c => c.Email == "adejorooluwatobi1@gmail.com");
+        if (customer != null)
+        {
+            var existingLedger = dbContext.Set<LoyaltyLedgerEntry>().IgnoreQueryFilters()
+                .FirstOrDefault(l => l.CustomerId == customer.Id && l.Delta == 4030);
+
+            if (existingLedger == null)
+            {
+                customer.PointsBalance += 4030;
+                dbContext.Customers.Update(customer);
+
+                dbContext.Set<LoyaltyLedgerEntry>().Add(new LoyaltyLedgerEntry
+                {
+                    CustomerId = customer.Id,
+                    Delta = 4030,
+                    Reason = "Card Redemption Credit: CHDN801885955477 (-₦403,000)",
+                    BalanceAfter = customer.PointsBalance,
+                    CreatedAt = DateTimeOffset.UtcNow
+                });
+
+                dbContext.SaveChanges();
+                Log.Information("Retroactively credited 4,030 loyalty points to customer {Email}.", customer.Email);
+            }
+        }
+    }
 }

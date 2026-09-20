@@ -51,7 +51,16 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
 
     public virtual void Update(T entity)
     {
-        _dbSet.Update(entity);
+        var entry = _context.Entry(entity);
+        if (entry.State == EntityState.Detached)
+        {
+            _dbSet.Attach(entity);
+            entry.State = EntityState.Modified;
+        }
+        else if (entry.State == EntityState.Unchanged)
+        {
+            entry.State = EntityState.Modified;
+        }
     }
 
     public virtual void Delete(T entity)

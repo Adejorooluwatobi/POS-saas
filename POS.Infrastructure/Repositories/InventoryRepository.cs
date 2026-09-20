@@ -171,4 +171,9 @@ public class InventoryRepository : GenericRepository<Inventory>, IInventoryRepos
             .OrderBy(i => i.Store.Name)
             .ToListAsync();
     }
+
+    public async Task AddBatchAsync(InventoryBatch batch)
+    {
+        await _context.InventoryBatches.AddAsync(batch);
+    }
 }

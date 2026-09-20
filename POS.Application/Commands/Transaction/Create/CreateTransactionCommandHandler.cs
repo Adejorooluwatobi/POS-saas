@@ -200,7 +200,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                         PinHash = !string.IsNullOrEmpty(itemDto.GiftCardPin) 
                             ? _passwordService.Hash(itemDto.GiftCardPin) 
                             : null,
-                        IsActive = true,
+                        IsActive = itemDto.ActivateNow ?? false,
                         IssuedAt = DateTimeOffset.UtcNow,
                         IssuingStoreId = request.Dto.StoreId
                     };
@@ -263,8 +263,6 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
 
                         var balBefore = card.Balance;
                         card.Balance = Math.Max(0, card.Balance - p.Amount);
-                        if (card.Balance == 0)
-                            card.IsActive = false;
 
                         _giftCardRepository.Update(card);
 

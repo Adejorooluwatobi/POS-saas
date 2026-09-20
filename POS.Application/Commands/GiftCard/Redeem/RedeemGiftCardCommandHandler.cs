@@ -12,6 +12,9 @@ public class RedeemGiftCardCommandHandler : IRequestHandler<RedeemGiftCardComman
 {
     private readonly IGiftCardRepository _repository;
     private readonly IGiftCardTransactionRepository _transactionRepository;
+    private readonly ICustomerRepository _customerRepository;
+    private readonly ITenantRepository _tenantRepository;
+    private readonly ILoyaltyLedgerRepository _loyaltyLedgerRepository;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
     private readonly ITenantContext _tenantContext;
@@ -20,6 +23,9 @@ public class RedeemGiftCardCommandHandler : IRequestHandler<RedeemGiftCardComman
     public RedeemGiftCardCommandHandler(
         IGiftCardRepository repository,
         IGiftCardTransactionRepository transactionRepository,
+        ICustomerRepository customerRepository,
+        ITenantRepository tenantRepository,
+        ILoyaltyLedgerRepository loyaltyLedgerRepository,
         IUnitOfWork uow,
         IMapper mapper,
         ITenantContext tenantContext,
@@ -27,6 +33,9 @@ public class RedeemGiftCardCommandHandler : IRequestHandler<RedeemGiftCardComman
     {
         _repository = repository;
         _transactionRepository = transactionRepository;
+        _customerRepository = customerRepository;
+        _tenantRepository = tenantRepository;
+        _loyaltyLedgerRepository = loyaltyLedgerRepository;
         _uow = uow;
         _mapper = mapper;
         _tenantContext = tenantContext;
@@ -62,9 +71,6 @@ public class RedeemGiftCardCommandHandler : IRequestHandler<RedeemGiftCardComman
         entity.Balance -= request.Dto.Amount;
         var balAfter = entity.Balance;
 
-        if (entity.Balance == 0)
-            entity.IsActive = false;
-
         var tx = new GiftCardTransaction
         {
             TenantId = entity.TenantId,
@@ -82,6 +88,36 @@ public class RedeemGiftCardCommandHandler : IRequestHandler<RedeemGiftCardComman
 
         await _transactionRepository.AddAsync(tx);
         _repository.Update(entity);
+
+        // ── Loyalty Points Accrual for Linked Customer ──────────────
+        if (entity.CustomerId.HasValue)
+        {
+            var tenant = await _tenantRepository.GetByIdAsync(entity.TenantId);
+            if (tenant != null && tenant.LoyaltyProgramEnabled && tenant.LoyaltyPointsEarnRate > 0)
+            {
+                var customer = await _customerRepository.GetByIdAsync(entity.CustomerId.Value);
+                if (customer != null)
+                {
+                    var pointsEarned = (int)(request.Dto.Amount / tenant.LoyaltyPointsEarnRate);
+                    if (pointsEarned > 0)
+                    {
+                        customer.PointsBalance += pointsEarned;
+                        _customerRepository.Update(customer);
+
+                        await _loyaltyLedgerRepository.AddAsync(new LoyaltyLedgerEntry
+                        {
+                            CustomerId = customer.Id,
+                            TransactionId = null,
+                            Delta = pointsEarned,
+                            Reason = $"Gift Card Redemption: {entity.CardNumber}",
+                            BalanceAfter = customer.PointsBalance,
+                            CreatedAt = DateTimeOffset.UtcNow
+                        });
+                    }
+                }
+            }
+        }
+
         await _uow.SaveChangesAsync(cancellationToken);
 
         var refreshed = await _repository.GetByIdWithDetailsAsync(entity.Id);

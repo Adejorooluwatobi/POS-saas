@@ -23,10 +23,24 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.HasIndex(c => c.TenantId);
         builder.HasIndex(c => new { c.TenantId, c.LoyaltyCardNo }).IsUnique();
         builder.HasIndex(c => new { c.TenantId, c.Email }).IsUnique();
+        builder.HasIndex(c => c.RegisteredStoreId);
+        builder.HasIndex(c => c.IsSelfRegistered);
 
         builder.HasOne(c => c.Tenant)
                .WithMany(t => t.Customers)
                .HasForeignKey(c => c.TenantId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(c => c.RegisteredStore)
+               .WithMany()
+               .HasForeignKey(c => c.RegisteredStoreId)
+               .IsRequired(false)
+               .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(c => c.RegisteredByStaff)
+               .WithMany()
+               .HasForeignKey(c => c.RegisteredByStaffId)
+               .IsRequired(false)
+               .OnDelete(DeleteBehavior.SetNull);
     }
 }

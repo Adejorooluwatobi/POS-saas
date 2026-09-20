@@ -52,17 +52,27 @@ public class TransferCardBalanceCommandHandler : IRequestHandler<TransferCardBal
         var destCard = await _giftCardRepository.GetByCardNumberAsync(tenantId, request.Dto.DestinationCardNumber.Trim())
             ?? throw new KeyNotFoundException($"Destination card '{request.Dto.DestinationCardNumber}' was not found.");
 
-        if (!sourceCard.IsActive)
-            throw new InvalidOperationException("Source card is inactive.");
+        var isSourceExpired = sourceCard.ExpiresAt.HasValue && sourceCard.ExpiresAt.Value < DateOnly.FromDateTime(DateTime.UtcNow);
+        var isDestExpired = destCard.ExpiresAt.HasValue && destCard.ExpiresAt.Value < DateOnly.FromDateTime(DateTime.UtcNow);
+
+        if (isDestExpired)
+            throw new InvalidOperationException("Destination card has expired and cannot receive funds.");
 
         if (!destCard.IsActive)
-            throw new InvalidOperationException("Destination card is inactive.");
+            throw new InvalidOperationException("Destination card is inactive and cannot receive funds.");
 
-        if (sourceCard.ExpiresAt.HasValue && sourceCard.ExpiresAt.Value < DateOnly.FromDateTime(DateTime.UtcNow))
-            throw new InvalidOperationException("Source card has expired.");
-
-        if (destCard.ExpiresAt.HasValue && destCard.ExpiresAt.Value < DateOnly.FromDateTime(DateTime.UtcNow))
-            throw new InvalidOperationException("Destination card has expired.");
+        if (isSourceExpired)
+        {
+            // Expired card balance can be recovered via transfer, but customer must be linked first
+            if (sourceCard.CustomerId is null)
+            {
+                throw new InvalidOperationException("Expired card must be linked to a registered customer before balance can be transferred. Please register or link the customer to this card first.");
+            }
+        }
+        else if (!sourceCard.IsActive)
+        {
+            throw new InvalidOperationException("Source card is deactivated. Please activate it first before transferring funds.");
+        }
 
         if (!string.IsNullOrEmpty(sourceCard.PinHash))
         {

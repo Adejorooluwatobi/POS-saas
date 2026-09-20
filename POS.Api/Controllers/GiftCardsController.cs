@@ -6,6 +6,8 @@ using POS.Application.Commands.GiftCard.Issue;
 using POS.Application.Commands.GiftCard.LinkCustomer;
 using POS.Application.Commands.GiftCard.Recharge;
 using POS.Application.Commands.GiftCard.Redeem;
+using POS.Application.Commands.GiftCard.ReplaceLost;
+using POS.Application.Commands.GiftCard.SetStatus;
 using POS.Application.Commands.GiftCard.Transfer;
 using POS.Application.Commands.GiftCard.Update;
 using POS.Application.DTOs;
@@ -93,6 +95,24 @@ public class GiftCardsController : ControllerBase
     public async Task<IActionResult> GetTransactions(Guid id)
     {
         var result = await _mediator.Send(new GetGiftCardTransactionsQuery(id));
+        return Ok(result);
+    }
+
+    /// <summary>Activates or deactivates a gift card.</summary>
+    [HttpPost("{id:guid}/set-status")]
+    [Authorize(Policy = "TenantStaffOnly")]
+    public async Task<IActionResult> SetStatus(Guid id, [FromBody] SetGiftCardStatusDto dto)
+    {
+        var result = await _mediator.Send(new SetGiftCardStatusCommand(id, dto));
+        return Ok(result);
+    }
+
+    /// <summary>Reports a lost/misplaced card, deactivates it, creates a replacement, and migrates balance.</summary>
+    [HttpPost("replace-lost")]
+    [Authorize(Policy = "TenantStaffOnly")]
+    public async Task<IActionResult> ReplaceLost([FromBody] ReplaceLostGiftCardDto dto)
+    {
+        var result = await _mediator.Send(new ReplaceLostCardCommand(dto));
         return Ok(result);
     }
 

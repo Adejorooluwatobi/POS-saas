@@ -218,6 +218,7 @@ public class Program
             // ── Pipeline ───────────────────────────────────────────────────────
             app.ApplyMigrations();
             app.SeedSuperAdmin();
+            app.SyncCustomerCardPoints();
 
             app.MapOpenApi();
             app.MapScalarApiReference(options =>

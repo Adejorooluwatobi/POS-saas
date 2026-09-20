@@ -68,8 +68,8 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<Tenant>().HasQueryFilter(t => _tenant.TenantId == null || t.Id == _tenant.TenantId);
 
         // Core tenant-scoped entities
-        modelBuilder.Entity<Store>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.Id == _tenant.StoreId));
-        modelBuilder.Entity<Staff>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<Store>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<Staff>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Customer>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Product>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId || _tenant.SystemRole == "SuperAdmin" || _tenant.SystemRole == "TenantAdmin" || _tenant.SystemRole == "Manager"));
@@ -77,7 +77,7 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<PricingRule>().HasQueryFilter(p => _tenant.TenantId == null || p.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Role>().HasQueryFilter(r => _tenant.TenantId == null || r.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Promotion>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId));
-        modelBuilder.Entity<GiftCard>().HasQueryFilter(g => (_tenant.TenantId == null || g.TenantId == _tenant.TenantId) && (g.IssuingStoreId == null || _tenant.StoreId == null || g.IssuingStoreId == _tenant.StoreId || _tenant.SystemRole == "SuperAdmin" || _tenant.SystemRole == "TenantAdmin" || _tenant.SystemRole == "Manager"));
+        modelBuilder.Entity<GiftCard>().HasQueryFilter(g => _tenant.TenantId == null || g.TenantId == _tenant.TenantId);
         modelBuilder.Entity<AuditLog>().HasQueryFilter(a => _tenant.TenantId == null || a.TenantId == _tenant.TenantId);
         modelBuilder.Entity<TenantSubscription>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
         modelBuilder.Entity<StoreProductOverride>().HasQueryFilter(o => (_tenant.TenantId == null || o.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || o.StoreId == _tenant.StoreId));

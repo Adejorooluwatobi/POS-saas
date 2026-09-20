@@ -26,6 +26,14 @@ public class ExceptionMiddleware
         {
             await HandleExceptionAsync(context, ex, HttpStatusCode.Forbidden, ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            await HandleExceptionAsync(context, ex, HttpStatusCode.Conflict, ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            await HandleExceptionAsync(context, ex, HttpStatusCode.NotFound, ex.Message);
+        }
         catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
         {
             var message = GetUserFriendlyUniqueConstraintMessage(ex);
@@ -50,14 +58,37 @@ public class ExceptionMiddleware
     {
         var inner = ex.InnerException?.Message ?? string.Empty;
 
-        if (inner.Contains("IX_Staff_EmployeeNo") || inner.Contains("EmployeeNo"))
-            return "An employee with this Employee Number already exists. Please use a different Employee Number.";
+        // Staff-specific constraints
+        if (inner.Contains("IX_Staff_TenantId_EmployeeNo") || inner.Contains("IX_Staff_EmployeeNo"))
+            return "A staff member with this Employee Number already exists. Please use a different Employee Number.";
 
-        if (inner.Contains("IX_Staff_Email") || inner.Contains("Email"))
-            return "An employee with this email address already exists.";
+        if (inner.Contains("IX_Staff_TenantId_Email") || inner.Contains("IX_Staff_Email"))
+            return "A staff member with this email address already exists.";
 
+        // Customer-specific constraints
+        if (inner.Contains("IX_Customers_TenantId_Email") || inner.Contains("IX_Customers_Email") || inner.Contains("Customers") && inner.Contains("Email"))
+            return "A customer with this email address is already registered.";
+
+        if (inner.Contains("IX_Customers_TenantId_LoyaltyCardNo") || inner.Contains("IX_Customers_LoyaltyCardNo"))
+            return "A customer with this loyalty card number already exists.";
+
+        // Terminal constraints
         if (inner.Contains("IX_Terminals") || inner.Contains("TerminalCode"))
             return "A terminal with this code already exists.";
+
+        // Product constraints
+        if (inner.Contains("IX_Products_TenantId_Sku"))
+            return "A product with this SKU already exists.";
+
+        if (inner.Contains("IX_Products_TenantId_Barcode"))
+            return "A product with this barcode already exists.";
+
+        // Column fallback checks (only if table name not present)
+        if (inner.Contains("EmployeeNo", StringComparison.OrdinalIgnoreCase))
+            return "A staff member with this Employee Number already exists.";
+
+        if (inner.Contains("LoyaltyCardNo", StringComparison.OrdinalIgnoreCase))
+            return "A customer with this loyalty card number already exists.";
 
         return "A record with these details already exists. Please check for duplicates.";
     }

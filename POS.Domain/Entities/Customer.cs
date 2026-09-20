@@ -19,6 +19,21 @@ public class Customer : AuditableEntity
     public CustomerTier Tier { get; set; } = CustomerTier.Bronze;
     public bool IsActive { get; set; } = true;
 
+    // Identity Verification & Liveness
+    public IdentityType IdentityType { get; set; } = IdentityType.None;
+    public string? EncryptedIdentityNumber { get; set; }
+    public string? PhotoUrl { get; set; }
+    public bool IsIdentityVerified { get; set; } = false;
+    public DateTimeOffset? LivenessVerifiedAt { get; set; }
+    public string? LivenessAuditLog { get; set; }
+
+    // Registration Origin & Store
+    public Guid? RegisteredStoreId { get; set; }
+    public Store? RegisteredStore { get; set; }
+    public bool IsSelfRegistered { get; set; } = false;
+    public Guid? RegisteredByStaffId { get; set; }
+    public Staff? RegisteredByStaff { get; set; }
+
     // Navigation
     public Tenant Tenant { get; set; } = null!;
     public ICollection<Transaction> Transactions { get; set; } = [];

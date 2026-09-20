@@ -2,6 +2,7 @@ using System.Text.Json;
 using AutoMapper;
 using POS.Domain.Common;
 using POS.Domain.Entities;
+using POS.Domain.Interfaces;
 using POS.Application.DTOs;
 using POS.Application.DTOs.InventoryOrder;
 using POS.Application.DTOs.StockRequisition;
@@ -64,7 +65,12 @@ public class MappingProfile : Profile
             .ForMember(d => d.HiredAt, o => o.Ignore());
 
         // ── Customer ──────────────────────────────────────────────────────
-        CreateMap<Customer, CustomerDto>();
+        CreateMap<Customer, CustomerDto>()
+            .ForMember(d => d.MaskedIdentityNumber, o => o.MapFrom<MaskedIdentityResolver>())
+            .ForMember(d => d.RegisteredStoreName, o => o.MapFrom(s => s.RegisteredStore != null ? s.RegisteredStore.Name : (s.IsSelfRegistered ? "Online (Self-Registered)" : null)))
+            .ForMember(d => d.RegisteredByStaffName, o => o.MapFrom(s => s.RegisteredByStaff != null ? s.RegisteredByStaff.FullName : null))
+            .ForMember(d => d.TotalSpend, o => o.MapFrom(s => s.Transactions.Where(t => t.Status == POS.Domain.Enums.TransactionStatus.Completed).Sum(t => t.GrandTotal)))
+            .ForMember(d => d.TotalVisits, o => o.MapFrom(s => s.Transactions.Count(t => t.Status == POS.Domain.Enums.TransactionStatus.Completed)));
         CreateMap<CreateCustomerDto, Customer>()
             .ForMember(d => d.TenantId, o => o.Ignore());
         CreateMap<UpdateCustomerDto, Customer>()
@@ -300,5 +306,33 @@ public class MappingProfile : Profile
             .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
             .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
             .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
+    }
+}
+
+public class MaskedIdentityResolver : IValueResolver<Customer, CustomerDto, string?>
+{
+    private readonly IEncryptionService? _encryptionService;
+
+    public MaskedIdentityResolver()
+    {
+    }
+
+    public MaskedIdentityResolver(IEncryptionService encryptionService)
+    {
+        _encryptionService = encryptionService;
+    }
+
+    public string? Resolve(Customer source, CustomerDto destination, string? destMember, ResolutionContext context)
+    {
+        if (string.IsNullOrWhiteSpace(source.EncryptedIdentityNumber))
+            return null;
+
+        if (_encryptionService != null)
+        {
+            var decrypted = _encryptionService.Decrypt(source.EncryptedIdentityNumber);
+            return _encryptionService.Mask(decrypted);
+        }
+
+        return "********";
     }
 }

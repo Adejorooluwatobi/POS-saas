@@ -16,10 +16,12 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<AuditInterceptor>();
         services.AddSingleton<IPasswordService, PasswordService>();
+        services.AddSingleton<IEncryptionService, AesEncryptionService>();
         services.AddScoped<ITokenService, JwtTokenGenerator>();
         services.AddSingleton<IReceiptNumberService, ReceiptNumberService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IGiftCardNumberGenerator, GiftCardNumberGenerator>();
+        services.AddScoped<ILoyaltyCardNumberGenerator, LoyaltyCardNumberGenerator>();
 
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 

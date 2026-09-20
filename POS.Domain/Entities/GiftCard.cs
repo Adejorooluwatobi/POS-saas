@@ -15,7 +15,8 @@ public class GiftCard : BaseEntity
     public Guid? IssuingStoreId { get; set; }
     public Guid? CustomerId { get; set; }
     public DateOnly? ExpiresAt { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; } = false;
+    public string? Notes { get; set; }
     public DateTimeOffset IssuedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation
