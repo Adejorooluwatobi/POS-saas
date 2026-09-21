@@ -11,7 +11,7 @@ public class TerminalRepository : GenericRepository<Terminal>, ITerminalReposito
 
     public override async Task<Terminal?> GetByIdAsync(Guid id)
     {
-        return await _dbSet.Include(t => t.Store).FirstOrDefaultAsync(t => t.Id == id);
+        return await _dbSet.Include(t => t.Store).ThenInclude(s => s.Tenant).FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public override async Task<POS.Domain.Common.PagedResult<Terminal>> GetPagedAsync(int pageNumber, int pageSize)
@@ -33,5 +33,5 @@ public class TerminalRepository : GenericRepository<Terminal>, ITerminalReposito
         await _dbSet.Where(t => t.StoreId == storeId).ToListAsync();
 
     public async Task<Terminal?> GetByPairingCodeAsync(string pairingCode) =>
-        await _dbSet.FirstOrDefaultAsync(t => t.PairingCode == pairingCode);
+        await _dbSet.Include(t => t.Store).ThenInclude(s => s.Tenant).FirstOrDefaultAsync(t => t.PairingCode == pairingCode);
 }

@@ -266,16 +266,34 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("EncryptedIdentityNumber")
+                        .HasColumnType("text");
+
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("IdentityType")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsIdentityVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSelfRegistered")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LivenessAuditLog")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LivenessVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LoyaltyCardNo")
                         .HasMaxLength(30)
@@ -288,8 +306,17 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
                     b.Property<int>("PointsBalance")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("RegisteredByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RegisteredStoreId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -302,6 +329,12 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IsSelfRegistered");
+
+                    b.HasIndex("RegisteredByStaffId");
+
+                    b.HasIndex("RegisteredStoreId");
 
                     b.HasIndex("TenantId");
 
@@ -394,6 +427,9 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateOnly?>("ExpiresAt")
                         .HasColumnType("date");
 
@@ -410,6 +446,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<Guid?>("IssuingStoreId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
                     b.Property<string>("PinHash")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
@@ -419,6 +458,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("IssuingStoreId");
 
                     b.HasIndex("TenantId");
@@ -427,6 +468,69 @@ namespace POS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("GiftCards", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.GiftCardTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("BalanceBefore")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GiftCardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("StaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("GiftCardId");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("StoreId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("GiftCardTransactions", (string)null);
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.Inventory", b =>
@@ -472,6 +576,62 @@ namespace POS.Infrastructure.Migrations
                     b.ToTable("Inventories", (string)null);
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.InventoryBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BatchNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiryAlertPercentage")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InventoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ProductionDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("QuantityOnHand")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuantityReserved")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VariantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryId");
+
+                    b.HasIndex("StoreId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("InventoryBatches");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.InventoryOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -498,6 +658,15 @@ namespace POS.Infrastructure.Migrations
 
                     b.Property<string>("DisputePhotoUrl")
                         .HasColumnType("text");
+
+                    b.Property<string>("DriverName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DriverPhone")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("EstimatedDeliveryTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsReferredTransfer")
                         .HasColumnType("boolean");
@@ -540,6 +709,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
+                    b.Property<string>("VehiclePlateNumber")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApprovedByStaffId");
@@ -570,14 +742,23 @@ namespace POS.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BatchNumber")
+                        .HasColumnType("text");
+
                     b.Property<string>("DamageNotes")
                         .HasColumnType("text");
 
                     b.Property<string>("DamagePhotoUrl")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("InventoryOrderId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ProductionDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("QuantityDamaged")
                         .HasColumnType("integer");
@@ -586,6 +767,9 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("QuantityReceived")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QuantityReceivedBaseUnits")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("VariantId")
@@ -1153,6 +1337,48 @@ namespace POS.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.StockMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BalanceAfter")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("QuantityChange")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReferenceType")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("VariantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
+
+                    b.HasIndex("VariantId");
+
+                    b.ToTable("StockMovements");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1395,6 +1621,18 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int>("LoyaltyMinRedemptionPoints")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("LoyaltyPointRedeemRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("LoyaltyPointsEarnRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("LoyaltyProgramEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -1425,8 +1663,12 @@ namespace POS.Infrastructure.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             IsActive = true,
                             IsVerified = false,
+                            LoyaltyMinRedemptionPoints = 50,
+                            LoyaltyPointRedeemRate = 1m,
+                            LoyaltyPointsEarnRate = 100m,
+                            LoyaltyProgramEnabled = true,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 5, 16, 17, 24, 37, 771, DateTimeKind.Unspecified).AddTicks(3941), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 20, 19, 36, 49, 65, DateTimeKind.Unspecified).AddTicks(1405), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 
@@ -1736,6 +1978,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -1854,11 +2099,25 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.Customer", b =>
                 {
+                    b.HasOne("POS.Domain.Entities.Staff", "RegisteredByStaff")
+                        .WithMany()
+                        .HasForeignKey("RegisteredByStaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("POS.Domain.Entities.Store", "RegisteredStore")
+                        .WithMany()
+                        .HasForeignKey("RegisteredStoreId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
                         .WithMany("Customers")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("RegisteredByStaff");
+
+                    b.Navigation("RegisteredStore");
 
                     b.Navigation("Tenant");
                 });
@@ -1876,6 +2135,11 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.GiftCard", b =>
                 {
+                    b.HasOne("POS.Domain.Entities.Customer", "Customer")
+                        .WithMany("GiftCards")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("POS.Domain.Entities.Store", "IssuingStore")
                         .WithMany()
                         .HasForeignKey("IssuingStoreId")
@@ -1887,7 +2151,42 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Customer");
+
                     b.Navigation("IssuingStore");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.GiftCardTransaction", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.GiftCard", "GiftCard")
+                        .WithMany("Transactions")
+                        .HasForeignKey("GiftCardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("POS.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GiftCard");
+
+                    b.Navigation("Staff");
+
+                    b.Navigation("Store");
 
                     b.Navigation("Tenant");
                 });
@@ -1907,6 +2206,41 @@ namespace POS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Store");
+
+                    b.Navigation("Variant");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.InventoryBatch", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Inventory", "Inventory")
+                        .WithMany("Batches")
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.ProductVariant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Inventory");
+
+                    b.Navigation("Store");
+
+                    b.Navigation("Tenant");
 
                     b.Navigation("Variant");
                 });
@@ -2164,6 +2498,25 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("POS.Domain.Entities.StockMovement", b =>
+                {
+                    b.HasOne("POS.Domain.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.Entities.ProductVariant", "Variant")
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+
+                    b.Navigation("Variant");
+                });
+
             modelBuilder.Entity("POS.Domain.Entities.StockRequisition", b =>
                 {
                     b.HasOne("POS.Domain.Entities.Staff", "CreatedBy")
@@ -2369,6 +2722,8 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Entities.Customer", b =>
                 {
+                    b.Navigation("GiftCards");
+
                     b.Navigation("LoyaltyLedger");
 
                     b.Navigation("Transactions");
@@ -2377,6 +2732,13 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Entities.GiftCard", b =>
                 {
                     b.Navigation("Payments");
+
+                    b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("POS.Domain.Entities.Inventory", b =>
+                {
+                    b.Navigation("Batches");
                 });
 
             modelBuilder.Entity("POS.Domain.Entities.InventoryOrder", b =>

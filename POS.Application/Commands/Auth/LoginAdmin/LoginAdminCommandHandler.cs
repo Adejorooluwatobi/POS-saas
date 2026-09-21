@@ -48,9 +48,10 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         }
 
         // Check if tenant is active
+        POS.Domain.Entities.Tenant? tenant = null;
         if (staff.SystemRole != SystemRole.SuperAdmin)
         {
-            var tenant = await _tenantRepo.GetByIdAsync(staff.TenantId);
+            tenant = await _tenantRepo.GetByIdAsync(staff.TenantId);
             if (tenant != null && !tenant.IsActive)
             {
                 throw new UnauthorizedAccessException("Your organization has been suspended. Please contact support.");
@@ -58,10 +59,11 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         }
 
         // Check if store is active (if staff is assigned to one)
+        POS.Domain.Entities.Store? assignedStore = null;
         if (staff.StoreId.HasValue && staff.SystemRole != SystemRole.SuperAdmin)
         {
-            var store = await _storeRepo.GetByIdAsync(staff.StoreId.Value);
-            if (store != null && !store.IsActive)
+            assignedStore = await _storeRepo.GetByIdAsync(staff.StoreId.Value);
+            if (assignedStore != null && !assignedStore.IsActive)
             {
                 throw new UnauthorizedAccessException("Your assigned store is currently inactive/suspended.");
             }
@@ -75,8 +77,22 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         
         var token = _tokenService.GenerateToken(staff.Id, staff.Email, roleStr, staff.FullName, tokenTenantId, staff.StoreId);
 
-        var businessName = (staff.SystemRole == SystemRole.SuperAdmin) ? "RetailOS Admin" : (await _tenantRepo.GetByIdAsync(staff.TenantId))?.BusinessName;
+        var businessName = (staff.SystemRole == SystemRole.SuperAdmin) ? "RetailOS Admin" : tenant?.BusinessName;
 
-        return new AuthResponseDto(token, roleStr, staff.TenantId, staff.FullName, staff.Id, staff.Email, staff.StoreId, businessName);
+        return new AuthResponseDto(
+            token, 
+            roleStr, 
+            staff.TenantId, 
+            staff.FullName, 
+            staff.Id, 
+            staff.Email, 
+            staff.StoreId, 
+            businessName,
+            assignedStore?.Name,
+            assignedStore?.Address,
+            assignedStore?.City,
+            assignedStore?.Phone,
+            tenant?.ContactEmail
+        );
     }
 }

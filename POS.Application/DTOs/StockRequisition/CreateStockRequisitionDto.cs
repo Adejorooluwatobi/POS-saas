@@ -5,6 +5,7 @@ namespace POS.Application.DTOs.StockRequisition;
 
 public class CreateStockRequisitionDto
 {
+    public Guid? RequestingStoreId { get; set; }
     public string? Notes { get; set; }
     public List<CreateStockRequisitionItemDto> Items { get; set; } = [];
 }

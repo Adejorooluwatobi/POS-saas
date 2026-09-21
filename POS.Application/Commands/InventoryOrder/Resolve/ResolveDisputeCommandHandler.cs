@@ -12,6 +12,7 @@ public class ResolveDisputeCommandHandler : IRequestHandler<ResolveDisputeComman
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
     private readonly IStockRequisitionRepository _requisitionRepository;
+    private readonly IStockMovementRepository _movementRepository;
     private readonly IUnitOfWork _uow;
     private readonly ITenantContext _tenantContext;
 
@@ -24,6 +25,7 @@ public class ResolveDisputeCommandHandler : IRequestHandler<ResolveDisputeComman
         IInventoryRepository inventoryRepository,
         IProductVariantRepository variantRepository,
         IStockRequisitionRepository requisitionRepository,
+        IStockMovementRepository movementRepository,
         IUnitOfWork uow,
         ITenantContext tenantContext,
         IEmailService emailService,
@@ -34,6 +36,7 @@ public class ResolveDisputeCommandHandler : IRequestHandler<ResolveDisputeComman
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
         _requisitionRepository = requisitionRepository;
+        _movementRepository = movementRepository;
         _uow = uow;
         _tenantContext = tenantContext;
         _emailService = emailService;
@@ -68,59 +71,10 @@ public class ResolveDisputeCommandHandler : IRequestHandler<ResolveDisputeComman
             var finalAgreedQty = itemDto.FinalAgreedQuantity;
             var qtyInBaseUnits = (int)(finalAgreedQty * variant.ConversionFactor);
 
-            // 1. Update Destination Store stock
-            var destInventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.DestinationStoreId);
-            if (destInventory == null)
-            {
-                destInventory = new Domain.Entities.Inventory
-                {
-                    TenantId = order.TenantId,
-                    VariantId = baseVariantId,
-                    StoreId = order.DestinationStoreId,
-                    QuantityOnHand = qtyInBaseUnits
-                };
-                await _inventoryRepository.AddAsync(destInventory);
-            }
-            else
-            {
-                destInventory.QuantityOnHand += qtyInBaseUnits;
-            }
-
-            // 2. If Store-to-Store transfer, return difference to Source Store
-            if (order.SourceStoreId.HasValue)
-            {
-                var originalOrderedQty = item.QuantityOrdered;
-                var shortage = originalOrderedQty - finalAgreedQty;
-                if (shortage > 0)
-                {
-                    var shortageInBaseUnits = (int)(shortage * variant.ConversionFactor);
-                    var sourceInventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
-                    if (sourceInventory != null)
-                    {
-                        sourceInventory.QuantityOnHand += shortageInBaseUnits;
-                    }
-                }
-            }
-
-            // 3. Update Requisition fulfillment if linked
-            if (order.StockRequisitionId.HasValue)
-            {
-                var requisition = await _requisitionRepository.GetByIdAsync(order.StockRequisitionId.Value);
-                if (requisition != null)
-                {
-                    var reqItem = requisition.Items.FirstOrDefault(ri => ri.VariantId == item.VariantId);
-                    if (reqItem != null)
-                    {
-                        reqItem.QuantityFulfilled += finalAgreedQty;
-                    }
-
-                    // Check if all items in requisition are fulfilled
-                    if (requisition.Items.All(ri => ri.QuantityFulfilled >= ri.QuantityRequested))
-                        requisition.Status = RequisitionStatus.FullyFulfilled;
-                    else
-                        requisition.Status = RequisitionStatus.PartiallyFulfilled;
-                }
-            }
+            // Update item record with the agreed quantities, but leave actual inventory & requisition updates to final approval.
+            item.QuantityReceived = finalAgreedQty;
+            item.QuantityReceivedBaseUnits = finalAgreedQty; // Frontend sends base units
+            item.DamageNotes = string.IsNullOrWhiteSpace(itemDto.ResolutionReason) ? "Damaged in Transit" : itemDto.ResolutionReason;
 
             // Update item record
             item.QuantityReceived = finalAgreedQty;

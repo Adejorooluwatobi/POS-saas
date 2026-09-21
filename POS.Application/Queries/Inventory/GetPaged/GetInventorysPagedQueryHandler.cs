@@ -22,7 +22,7 @@ public class GetInventorysPagedQueryHandler : IRequestHandler<GetInventorysPaged
 
     public async Task<PagedResult<InventoryDto>> Handle(GetInventorysPagedQuery request, CancellationToken cancellationToken)
     {
-        var pagedEntities = await _repository.GetPagedAsync(request.PageNumber, request.PageSize);
+        var pagedEntities = await _repository.GetAggregatedPagedAsync(request.PageNumber, request.PageSize);
         
         return new PagedResult<InventoryDto>
         {

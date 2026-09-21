@@ -31,7 +31,7 @@ public class CreateStockRequisitionCommandHandler : IRequestHandler<CreateStockR
     {
         var tenantId = _tenantContext.TenantId ?? throw new UnauthorizedAccessException("Tenant context missing.");
         var staffId = _tenantContext.UserId ?? throw new UnauthorizedAccessException("User context missing.");
-        var storeId = _tenantContext.StoreId ?? throw new InvalidOperationException("Requisitions must be created from a store context.");
+        var storeId = request.Dto.RequestingStoreId ?? _tenantContext.StoreId ?? throw new InvalidOperationException("Requisitions must be created from a store context.");
 
         var requisitionNumber = $"REQ-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
 

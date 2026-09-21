@@ -12,4 +12,5 @@ public class ResolveItemDto
 {
     public Guid ItemId { get; set; }
     public int FinalAgreedQuantity { get; set; }
+    public string? ResolutionReason { get; set; }
 }

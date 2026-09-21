@@ -20,6 +20,10 @@ public class InventoryOrder : BaseEntity
     public DateTimeOffset? DispatchedAt { get; set; }
     public DateTimeOffset? ReceivedAt { get; set; }
     public DateTimeOffset? ResolvedAt { get; set; }
+    public DateTimeOffset? EstimatedDeliveryTime { get; set; }
+    public string? DriverName { get; set; }
+    public string? DriverPhone { get; set; }
+    public string? VehiclePlateNumber { get; set; }
     public string? Notes { get; set; }
     public string? DisputeNotes { get; set; }
     public string? DisputePhotoUrl { get; set; }

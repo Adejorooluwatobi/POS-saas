@@ -32,6 +32,7 @@ public class StockRequisitionsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Create([FromBody] CreateStockRequisitionDto dto)
     {
         var result = await _mediator.Send(new CreateStockRequisitionCommand(dto));
@@ -39,7 +40,7 @@ public class StockRequisitionsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/review")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Review(Guid id)
     {
         await _mediator.Send(new ReviewStockRequisitionCommand(id));
@@ -47,7 +48,7 @@ public class StockRequisitionsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/approve")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Approve(Guid id, [FromBody] ApproveRequisitionDto dto)
     {
         await _mediator.Send(new ApproveStockRequisitionCommand(id, dto));
@@ -55,7 +56,7 @@ public class StockRequisitionsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/reject")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Reject(Guid id, [FromQuery] string reason)
     {
         await _mediator.Send(new RejectStockRequisitionCommand(id, reason));
@@ -63,6 +64,7 @@ public class StockRequisitionsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/cancel")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Cancel(Guid id)
     {
         await _mediator.Send(new CancelStockRequisitionCommand(id));

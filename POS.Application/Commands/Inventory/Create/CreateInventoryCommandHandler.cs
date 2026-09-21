@@ -30,6 +30,33 @@ public class CreateInventoryCommandHandler : IRequestHandler<CreateInventoryComm
         }
 
         var entity = _mapper.Map<Entity>(request.Dto);
+        if (_tenantContext.TenantId.HasValue)
+        {
+            entity.TenantId = _tenantContext.TenantId.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Dto.BatchNumber) || request.Dto.ExpiryDate.HasValue)
+        {
+            var batch = new POS.Domain.Entities.InventoryBatch
+            {
+                TenantId = entity.TenantId,
+                InventoryId = entity.Id,
+                VariantId = entity.VariantId,
+                StoreId = entity.StoreId,
+                BatchNumber = !string.IsNullOrWhiteSpace(request.Dto.BatchNumber) 
+                    ? request.Dto.BatchNumber 
+                    : $"LOT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4].ToUpper()}",
+                ProductionDate = request.Dto.ProductionDate,
+                ExpiryDate = request.Dto.ExpiryDate,
+                QuantityOnHand = entity.QuantityOnHand,
+                QuantityReserved = 0,
+                ExpiryAlertPercentage = request.Dto.ExpiryAlertPercentage ?? 30,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            };
+            entity.Batches.Add(batch);
+        }
+        
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
         return _mapper.Map<InventoryDto>(entity);

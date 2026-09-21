@@ -175,6 +175,8 @@ public class Program
                 options.AddPolicy("SuperAdminOnly", policy => policy.RequireClaim("system_role", "SuperAdmin"));
                 options.AddPolicy("AdminOnly", policy => policy.RequireClaim("system_role", "SuperAdmin", "TenantAdmin", "Manager", "StoreManager", "Supervisor"));
                 options.AddPolicy("StaffOnly", policy => policy.RequireClaim("system_role", "SuperAdmin", "TenantAdmin", "Manager", "StoreManager", "Supervisor", "Cashier"));
+                options.AddPolicy("TenantAdminOnly", policy => policy.RequireClaim("system_role", "TenantAdmin", "Manager", "StoreManager", "Supervisor"));
+                options.AddPolicy("TenantStaffOnly", policy => policy.RequireClaim("system_role", "TenantAdmin", "Manager", "StoreManager", "Supervisor", "Cashier"));
                 options.AddPolicy("ConsumerOnly", policy => policy.RequireClaim("system_role", "Consumer"));
             });
 
@@ -216,6 +218,7 @@ public class Program
             // ── Pipeline ───────────────────────────────────────────────────────
             app.ApplyMigrations();
             app.SeedSuperAdmin();
+            app.SyncCustomerCardPoints();
 
             app.MapOpenApi();
             app.MapScalarApiReference(options =>
@@ -258,7 +261,7 @@ public class Program
             Log.Information("RetailOS POS Backend API started successfully in {Environment} mode.", app.Environment.EnvironmentName);
             app.Run();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex.GetType().Name != "HostAbortedException")
         {
             Log.Fatal(ex, "RetailOS POS Backend API terminated unexpectedly.");
         }

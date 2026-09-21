@@ -16,6 +16,12 @@ public class Tenant : AuditableEntity
     public bool IsActive { get; set; } = true;
     public bool IsVerified { get; set; } = false;
 
+    // Loyalty Program Settings
+    public decimal LoyaltyPointsEarnRate { get; set; } = 100m;
+    public decimal LoyaltyPointRedeemRate { get; set; } = 1m;
+    public bool LoyaltyProgramEnabled { get; set; } = true;
+    public int LoyaltyMinRedemptionPoints { get; set; } = 50;
+
     // Navigation
     public ICollection<Store> Stores { get; set; } = [];
     public ICollection<Staff> Staff { get; set; } = [];

@@ -9,9 +9,13 @@ public class InventoryOrderItem : BaseEntity
     public required Guid VariantId { get; set; }
     public int QuantityOrdered { get; set; }
     public int? QuantityReceived { get; set; }
+    public int? QuantityReceivedBaseUnits { get; set; }
     public int? QuantityDamaged { get; set; }
     public string? DamageNotes { get; set; }
     public string? DamagePhotoUrl { get; set; }
+    public string? BatchNumber { get; set; }
+    public DateTimeOffset? ProductionDate { get; set; }
+    public DateTimeOffset? ExpiryDate { get; set; }
 
     // Navigation
     public InventoryOrder Order { get; set; } = null!;

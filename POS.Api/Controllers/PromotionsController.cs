@@ -36,6 +36,7 @@ public class PromotionsController : ControllerBase
         => Ok(await _mediator.Send(new ValidatePromoCodeQuery(code, cartAmount)));
 
     [HttpPost]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreatePromotionDto dto)
     {
         var result = await _mediator.Send(new CreatePromotionCommand(dto));
@@ -43,6 +44,7 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePromotionDto dto)
     {
         await _mediator.Send(new UpdatePromotionCommand(id, dto));
@@ -50,6 +52,7 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeletePromotionCommand(id));

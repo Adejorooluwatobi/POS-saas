@@ -21,9 +21,13 @@ public class CreateTransactionItemDto
     public decimal TaxRate { get; set; }
     public string? Name { get; set; }
     
+    public string? UnitOfMeasure { get; set; }
+    public decimal? BaseQuantity { get; set; }
+    
     // Gift Card Issuance
     public bool IsGiftCardSale { get; set; }
     public string? GiftCardNumber { get; set; }
     public string? GiftCardPin { get; set; }
     public string? GiftCardOldPin { get; set; }
+    public bool? ActivateNow { get; set; }
 }

@@ -25,6 +25,10 @@ public class InventoryOrderDto
     public DateTimeOffset? DispatchedAt { get; set; }
     public DateTimeOffset? ReceivedAt { get; set; }
     public DateTimeOffset? ResolvedAt { get; set; }
+    public DateTimeOffset? EstimatedDeliveryTime { get; set; }
+    public string? DriverName { get; set; }
+    public string? DriverPhone { get; set; }
+    public string? VehiclePlateNumber { get; set; }
     public string? Notes { get; set; }
     public string? DisputeNotes { get; set; }
     public string? DisputePhotoUrl { get; set; }
@@ -45,7 +49,17 @@ public class InventoryOrderItemDto
     public string Sku { get; set; } = null!;
     public int QuantityOrdered { get; set; }
     public int? QuantityReceived { get; set; }
+    public int? QuantityReceivedBaseUnits { get; set; }
     public int? QuantityDamaged { get; set; }
     public string? DamageNotes { get; set; }
     public string? DamagePhotoUrl { get; set; }
+    
+    // Packaging info for UI
+    public decimal ConversionFactor { get; set; }
+    public int? SinglesPerRoll { get; set; }
+    public int? RollsPerPack { get; set; }
+    public int? SinglesPerPack { get; set; }
+    public string? BatchNumber { get; set; }
+    public DateTimeOffset? ProductionDate { get; set; }
+    public DateTimeOffset? ExpiryDate { get; set; }
 }

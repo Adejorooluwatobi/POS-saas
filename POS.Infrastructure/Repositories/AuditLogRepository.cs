@@ -29,4 +29,13 @@ public class AuditLogRepository : GenericRepository<AuditLog>, IAuditLogReposito
             PageSize = pageSize
         };
     }
+
+    public async Task<AuditLog?> GetByIdWithDetailsAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(a => a.User)
+            .Include(a => a.Store)
+            .Include(a => a.Terminal)
+            .FirstOrDefaultAsync(a => a.Id == id);
+    }
 }

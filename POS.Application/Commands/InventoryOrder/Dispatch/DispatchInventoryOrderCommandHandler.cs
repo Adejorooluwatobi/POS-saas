@@ -10,6 +10,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
     private readonly IInventoryOrderRepository _orderRepository;
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
+    private readonly IStockMovementRepository _movementRepository;
     private readonly IUnitOfWork _uow;
     private readonly ITenantContext _tenantContext;
     private readonly IEmailService _emailService;
@@ -20,6 +21,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
         IInventoryOrderRepository orderRepository,
         IInventoryRepository inventoryRepository,
         IProductVariantRepository variantRepository,
+        IStockMovementRepository movementRepository,
         IUnitOfWork uow,
         ITenantContext tenantContext,
         IEmailService emailService,
@@ -29,6 +31,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
         _orderRepository = orderRepository;
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
+        _movementRepository = movementRepository;
         _uow = uow;
         _tenantContext = tenantContext;
         _emailService = emailService;
@@ -53,24 +56,52 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                     ?? throw new KeyNotFoundException($"Variant {item.VariantId} not found.");
                 
                 var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
-                var qtyInBaseUnits = (int)(item.QuantityOrdered * variant.ConversionFactor);
+                var qtyInBaseUnits = item.QuantityOrdered;
 
                 var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
                 if (inventory == null || inventory.QuantityOnHand < qtyInBaseUnits)
                 {
-                    // Optionally throw error if not enough stock at source
-                    // throw new InvalidOperationException($"Insufficient stock for {variant.Sku} at source store.");
+                    var available = inventory?.QuantityOnHand ?? 0;
+                    throw new InvalidOperationException($"Insufficient stock for {variant.Sku} at source store. You only have {available} available.");
                 }
 
-                if (inventory != null)
+                inventory.QuantityOnHand -= qtyInBaseUnits;
+                
+                var movement = new Domain.Entities.StockMovement
                 {
-                    inventory.QuantityOnHand -= qtyInBaseUnits;
-                }
+                    TenantId = order.TenantId,
+                    StoreId = order.SourceStoreId.Value,
+                    VariantId = baseVariantId,
+                    QuantityChange = -qtyInBaseUnits,
+                    BalanceAfter = inventory.QuantityOnHand,
+                    Reason = $"Dispatched Order {order.OrderNumber}",
+                    ReferenceId = order.Id,
+                    ReferenceType = "InventoryOrder"
+                };
+                
+                await _movementRepository.AddAsync(movement);
             }
         }
 
         order.Status = InventoryOrderStatus.Dispatched;
-        order.DispatchedAt = DateTimeOffset.UtcNow;
+        order.DispatchedAt = request.Dto?.DispatchedAt ?? DateTimeOffset.UtcNow;
+        if (request.Dto != null)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Dto.DriverName))
+                order.DriverName = request.Dto.DriverName.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Dto.DriverPhone))
+                order.DriverPhone = request.Dto.DriverPhone.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Dto.VehiclePlateNumber))
+                order.VehiclePlateNumber = request.Dto.VehiclePlateNumber.Trim();
+            if (request.Dto.EstimatedDeliveryTime.HasValue)
+                order.EstimatedDeliveryTime = request.Dto.EstimatedDeliveryTime.Value;
+            if (!string.IsNullOrWhiteSpace(request.Dto.DispatchNotes))
+            {
+                order.Notes = string.IsNullOrWhiteSpace(order.Notes)
+                    ? request.Dto.DispatchNotes.Trim()
+                    : $"{order.Notes}\n[Dispatch Note]: {request.Dto.DispatchNotes.Trim()}";
+            }
+        }
 
         await _uow.SaveChangesAsync(cancellationToken);
 
@@ -88,6 +119,14 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                 $"<tr><td style='padding: 8px 0; border-bottom: 1px solid #F1F5F9;'>{i.Variant?.Sku ?? "Item"}</td>" +
                 $"<td style='padding: 8px 0; border-bottom: 1px solid #F1F5F9;'>{i.QuantityOrdered}</td></tr>"));
 
+            var logisticsDetails = "";
+            if (!string.IsNullOrWhiteSpace(order.DriverName))
+                logisticsDetails += $" Driver: {order.DriverName}" + (!string.IsNullOrWhiteSpace(order.DriverPhone) ? $" ({order.DriverPhone})" : "");
+            if (!string.IsNullOrWhiteSpace(order.VehiclePlateNumber))
+                logisticsDetails += $" | Vehicle Plate: {order.VehiclePlateNumber}";
+            if (order.EstimatedDeliveryTime.HasValue)
+                logisticsDetails += $" | Est. Delivery: {order.EstimatedDeliveryTime.Value:g}";
+
             foreach (var manager in managers)
             {
                 await _emailService.SendTemplatedEmailAsync(
@@ -97,7 +136,7 @@ public class DispatchInventoryOrderCommandHandler : IRequestHandler<DispatchInve
                     new
                     {
                         Title = "New Inbound Shipment",
-                        Message = $"A new inventory order has been dispatched from {sourceStoreName} to your store ({destinationStore?.Name}). Please prepare to receive it.",
+                        Message = $"A new inventory order has been dispatched from {sourceStoreName} to your store ({destinationStore?.Name}).{logisticsDetails} Please prepare to receive it.",
                         OrderNumber = order.OrderNumber,
                         Status = "Dispatched",
                         SourceStore = sourceStoreName,

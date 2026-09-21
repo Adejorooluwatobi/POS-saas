@@ -29,6 +29,7 @@ public class PaymentsController : ControllerBase
 
     /// <summary>Records a payment against a transaction.</summary>
     [HttpPost]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
     {
         var result = await _mediator.Send(new CreatePaymentCommand(dto));

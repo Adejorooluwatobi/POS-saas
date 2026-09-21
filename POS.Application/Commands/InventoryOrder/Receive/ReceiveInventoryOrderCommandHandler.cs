@@ -40,6 +40,7 @@ public class ReceiveInventoryOrderCommandHandler : IRequestHandler<ReceiveInvent
                 ?? throw new KeyNotFoundException($"Item {itemDto.ItemId} not found in order.");
 
             item.QuantityReceived = itemDto.QuantityReceived;
+            item.QuantityReceivedBaseUnits = itemDto.QuantityReceivedBaseUnits;
             item.QuantityDamaged = itemDto.QuantityDamaged;
             item.DamageNotes = itemDto.DamageNotes;
             item.DamagePhotoUrl = itemDto.DamagePhotoUrl;

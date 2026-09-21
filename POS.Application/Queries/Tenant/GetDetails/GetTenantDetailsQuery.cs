@@ -42,10 +42,12 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
             ?? throw new KeyNotFoundException($"Tenant {request.Id} not found.");
 
         var now = DateTimeOffset.UtcNow;
-        var today = now.Date;
-        var startOfWeek = now.AddDays(-(int)now.DayOfWeek + (int)DayOfWeek.Monday).Date;
-        var startOfMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
-        var startOfYear = new DateTimeOffset(now.Year, 1, 1, 0, 0, 0, now.Offset);
+        var today = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+        int diff = (7 + (now.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var startOfWeekDate = now.AddDays(-diff);
+        var startOfWeek = new DateTimeOffset(startOfWeekDate.Year, startOfWeekDate.Month, startOfWeekDate.Day, 0, 0, 0, TimeSpan.Zero);
+        var startOfMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var startOfYear = new DateTimeOffset(now.Year, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
         // Revenue Base Query (Filtered by Tenant via Stores)
         // Note: Transaction has StoreId, and Store has TenantId.

@@ -32,6 +32,7 @@ public class InventoryController : ControllerBase
 
     /// <summary>Seeds initial stock for a product variant at a store.</summary>
     [HttpPost]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Create([FromBody] CreateInventoryDto dto)
     {
         var result = await _mediator.Send(new CreateInventoryCommand(dto));
@@ -40,6 +41,7 @@ public class InventoryController : ControllerBase
 
     /// <summary>Adjusts stock levels (restock, shrinkage write-off, etc.).</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateInventoryDto dto)
     {
         await _mediator.Send(new UpdateInventoryCommand(id, dto));

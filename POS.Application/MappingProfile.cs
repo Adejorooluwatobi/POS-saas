@@ -1,6 +1,8 @@
 using System.Text.Json;
 using AutoMapper;
+using POS.Domain.Common;
 using POS.Domain.Entities;
+using POS.Domain.Interfaces;
 using POS.Application.DTOs;
 using POS.Application.DTOs.InventoryOrder;
 using POS.Application.DTOs.StockRequisition;
@@ -23,7 +25,8 @@ public class MappingProfile : Profile
             .ForMember(d => d.Slug, o => o.Ignore());
 
         // ── Store ─────────────────────────────────────────────────────────
-        CreateMap<Store, StoreDto>();
+        CreateMap<Store, StoreDto>()
+            .ForMember(d => d.TenantEmail, o => o.MapFrom(s => s.Tenant != null ? s.Tenant.ContactEmail : null));
         CreateMap<CreateStoreDto, Store>()
             .ForMember(d => d.TenantId, o => o.Ignore());
         CreateMap<UpdateStoreDto, Store>()
@@ -63,7 +66,12 @@ public class MappingProfile : Profile
             .ForMember(d => d.HiredAt, o => o.Ignore());
 
         // ── Customer ──────────────────────────────────────────────────────
-        CreateMap<Customer, CustomerDto>();
+        CreateMap<Customer, CustomerDto>()
+            .ForMember(d => d.MaskedIdentityNumber, o => o.MapFrom<MaskedIdentityResolver>())
+            .ForMember(d => d.RegisteredStoreName, o => o.MapFrom(s => s.RegisteredStore != null ? s.RegisteredStore.Name : (s.IsSelfRegistered ? "Online (Self-Registered)" : null)))
+            .ForMember(d => d.RegisteredByStaffName, o => o.MapFrom(s => s.RegisteredByStaff != null ? s.RegisteredByStaff.FullName : null))
+            .ForMember(d => d.TotalSpend, o => o.MapFrom(s => s.Transactions.Where(t => t.Status == POS.Domain.Enums.TransactionStatus.Completed).Sum(t => t.GrandTotal)))
+            .ForMember(d => d.TotalVisits, o => o.MapFrom(s => s.Transactions.Count(t => t.Status == POS.Domain.Enums.TransactionStatus.Completed)));
         CreateMap<CreateCustomerDto, Customer>()
             .ForMember(d => d.TenantId, o => o.Ignore());
         CreateMap<UpdateCustomerDto, Customer>()
@@ -122,12 +130,14 @@ public class MappingProfile : Profile
 
         // ── Inventory ─────────────────────────────────────────────────────
         CreateMap<Inventory, InventoryDto>()
-            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Product.Name))
-            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.Name : string.Empty))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant != null ? s.Variant.Sku : string.Empty))
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store != null ? s.Store.Name : string.Empty))
             .ForMember(d => d.QuantityAvailable, o => o.MapFrom(s => s.QuantityAvailable))
-            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product.SinglesPerRoll))
-            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product.RollsPerPack))
-            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product.SinglesPerPack));
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
+            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant != null && s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
+        CreateMap<AggregatedInventory, InventoryDto>();
         CreateMap<CreateInventoryDto, Inventory>();
         CreateMap<UpdateInventoryDto, Inventory>()
             .ForMember(d => d.Id, o => o.Ignore())
@@ -194,7 +204,11 @@ public class MappingProfile : Profile
 
         // ── Terminal ──────────────────────────────────────────────────────
         CreateMap<Terminal, TerminalDto>()
-            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store.Name));
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store.Name))
+            .ForMember(d => d.StoreAddress, o => o.MapFrom(s => s.Store.Address))
+            .ForMember(d => d.StoreCity, o => o.MapFrom(s => s.Store.City))
+            .ForMember(d => d.StorePhone, o => o.MapFrom(s => s.Store.Phone))
+            .ForMember(d => d.TenantEmail, o => o.MapFrom(s => s.Store != null && s.Store.Tenant != null ? s.Store.Tenant.ContactEmail : null));
         CreateMap<CreateTerminalDto, Terminal>()
             .ForMember(d => d.TerminalCode, o => o.Ignore())
             .ForMember(d => d.StoreId, o => o.Ignore())
@@ -225,12 +239,26 @@ public class MappingProfile : Profile
             .ForMember(d => d.SingleUsePerCustomer, o => o.Ignore());
 
         // ── GiftCard ──────────────────────────────────────────────────────
-        CreateMap<GiftCard, GiftCardDto>();
+        CreateMap<GiftCard, GiftCardDto>()
+            .ForMember(d => d.CustomerName, o => o.MapFrom(s => s.Customer != null ? s.Customer.FirstName + " " + s.Customer.LastName : null))
+            .ForMember(d => d.CustomerPhone, o => o.MapFrom(s => s.Customer != null ? s.Customer.Phone : null))
+            .ForMember(d => d.CustomerEmail, o => o.MapFrom(s => s.Customer != null ? s.Customer.Email : null))
+            .ForMember(d => d.CustomerLoyaltyCardNo, o => o.MapFrom(s => s.Customer != null ? s.Customer.LoyaltyCardNo : null))
+            .ForMember(d => d.CustomerPointsBalance, o => o.MapFrom(s => s.Customer != null ? (int?)s.Customer.PointsBalance : null));
         CreateMap<IssueGiftCardDto, GiftCard>()
             .ForMember(d => d.TenantId, o => o.Ignore())
             .ForMember(d => d.Balance, o => o.Ignore())
             .ForMember(d => d.IsActive, o => o.Ignore())
-            .ForMember(d => d.IssuedAt, o => o.Ignore());
+            .ForMember(d => d.IssuedAt, o => o.Ignore())
+            .ForMember(d => d.Customer, o => o.Ignore())
+            .ForMember(d => d.Transactions, o => o.Ignore());
+
+        CreateMap<GiftCardTransaction, GiftCardTransactionDto>()
+            .ForMember(d => d.CardNumber, o => o.MapFrom(s => s.GiftCard != null ? s.GiftCard.CardNumber : ""))
+            .ForMember(d => d.Type, o => o.MapFrom(s => s.Type.ToString()))
+            .ForMember(d => d.PaymentMethod, o => o.MapFrom(s => s.Method.ToString()))
+            .ForMember(d => d.StoreName, o => o.MapFrom(s => s.Store != null ? s.Store.Name : null))
+            .ForMember(d => d.StaffName, o => o.MapFrom(s => s.Staff != null ? s.Staff.FullName : null));
 
         // ── TenantSubscription ────────────────────────────────────────────
         CreateMap<TenantSubscription, TenantSubscriptionDto>()
@@ -259,8 +287,14 @@ public class MappingProfile : Profile
             .ForMember(d => d.ResolvedByName, o => o.MapFrom(s => s.ResolvedBy != null ? s.ResolvedBy.FullName : null));
 
         CreateMap<InventoryOrderItem, InventoryOrderItemDto>()
-            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Sku)) // Or variant name if it has one
-            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku));
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.Name : s.Variant.Sku))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.ConversionFactor, o => o.MapFrom(s => 
+                (s.Variant.ConversionFactor > 1) ? s.Variant.ConversionFactor : 
+                (s.Variant.Product != null && s.Variant.Product.SinglesPerPack > 1 ? (decimal)s.Variant.Product.SinglesPerPack.Value : 1m)))
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
+            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
 
         // ── StockRequisition ──────────────────────────────────────────────
         CreateMap<StockRequisition, StockRequisitionDto>()
@@ -269,7 +303,41 @@ public class MappingProfile : Profile
             .ForMember(d => d.ReviewedByName, o => o.MapFrom(s => s.ReviewedBy != null ? s.ReviewedBy.FullName : null));
 
         CreateMap<StockRequisitionItem, StockRequisitionItemDto>()
-            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Sku))
-            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku));
+            .ForMember(d => d.VariantName, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.Name : s.Variant.Sku))
+            .ForMember(d => d.Sku, o => o.MapFrom(s => s.Variant.Sku))
+            .ForMember(d => d.ConversionFactor, o => o.MapFrom(s => 
+                (s.Variant.ConversionFactor > 1) ? s.Variant.ConversionFactor : 
+                (s.Variant.Product != null && s.Variant.Product.SinglesPerPack > 1 ? (decimal)s.Variant.Product.SinglesPerPack.Value : 1m)))
+            .ForMember(d => d.SinglesPerRoll, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerRoll : null))
+            .ForMember(d => d.RollsPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.RollsPerPack : null))
+            .ForMember(d => d.SinglesPerPack, o => o.MapFrom(s => s.Variant.Product != null ? s.Variant.Product.SinglesPerPack : null));
+    }
+}
+
+public class MaskedIdentityResolver : IValueResolver<Customer, CustomerDto, string?>
+{
+    private readonly IEncryptionService? _encryptionService;
+
+    public MaskedIdentityResolver()
+    {
+    }
+
+    public MaskedIdentityResolver(IEncryptionService encryptionService)
+    {
+        _encryptionService = encryptionService;
+    }
+
+    public string? Resolve(Customer source, CustomerDto destination, string? destMember, ResolutionContext context)
+    {
+        if (string.IsNullOrWhiteSpace(source.EncryptedIdentityNumber))
+            return null;
+
+        if (_encryptionService != null)
+        {
+            var decrypted = _encryptionService.Decrypt(source.EncryptedIdentityNumber);
+            return _encryptionService.Mask(decrypted);
+        }
+
+        return "********";
     }
 }

@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using POS.Application.DTOs;
 using POS.Domain.Entities;
+using POS.Domain.Enums;
 using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
 
@@ -19,16 +20,28 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
     private readonly IProductVariantRepository _variantRepository;
     private readonly ITillSessionRepository _sessionRepository;
     private readonly IGiftCardRepository _giftCardRepository;
+    private readonly IGiftCardTransactionRepository _giftCardTxRepository;
+    private readonly ICustomerRepository _customerRepository;
+    private readonly ILoyaltyLedgerRepository _loyaltyLedgerRepository;
+    private readonly ITenantRepository _tenantRepository;
     private readonly IPasswordService _passwordService;
     private readonly IGiftCardNumberGenerator _cardNumberGenerator;
 
     public CreateTransactionCommandHandler(
-        ITransactionRepository repository, IStoreRepository storeRepository,
-        IUnitOfWork uow, IMapper mapper,
-        ITenantContext tenantContext, IReceiptNumberService receiptNumberService,
-        IInventoryRepository inventoryRepository, IProductVariantRepository variantRepository,
+        ITransactionRepository repository,
+        IStoreRepository storeRepository,
+        IUnitOfWork uow,
+        IMapper mapper,
+        ITenantContext tenantContext,
+        IReceiptNumberService receiptNumberService,
+        IInventoryRepository inventoryRepository,
+        IProductVariantRepository variantRepository,
         ITillSessionRepository sessionRepository,
         IGiftCardRepository giftCardRepository,
+        IGiftCardTransactionRepository giftCardTxRepository,
+        ICustomerRepository customerRepository,
+        ILoyaltyLedgerRepository loyaltyLedgerRepository,
+        ITenantRepository tenantRepository,
         IPasswordService passwordService,
         IGiftCardNumberGenerator cardNumberGenerator)
     {
@@ -42,6 +55,10 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         _variantRepository = variantRepository;
         _sessionRepository = sessionRepository;
         _giftCardRepository = giftCardRepository;
+        _giftCardTxRepository = giftCardTxRepository;
+        _customerRepository = customerRepository;
+        _loyaltyLedgerRepository = loyaltyLedgerRepository;
+        _tenantRepository = tenantRepository;
         _passwordService = passwordService;
         _cardNumberGenerator = cardNumberGenerator;
     }
@@ -57,8 +74,10 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
         if (session.Status != POS.Domain.Enums.SessionStatus.Open)
             throw new InvalidOperationException("Cannot perform transaction on a closed till session.");
 
+        var tenantId = _tenantContext.TenantId ?? store.TenantId;
+
         var entity = _mapper.Map<POS.Domain.Entities.Transaction>(request.Dto);
-        entity.CashierId = _tenantContext.UserId!.Value;
+        entity.CashierId = _tenantContext.UserId ?? session.StaffId;
         entity.ReceiptNumber = _receiptNumberService.Generate(store.Code);
 
         foreach (var itemDto in request.Dto.Items)
@@ -70,7 +89,7 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             {
                 if (string.IsNullOrEmpty(itemDto.GiftCardNumber) || itemDto.GiftCardNumber.Length != 16)
                 {
-                    itemDto.GiftCardNumber = await _cardNumberGenerator.GenerateCardNumberAsync(_tenantContext.TenantId!.Value, cancellationToken);
+                    itemDto.GiftCardNumber = await _cardNumberGenerator.GenerateCardNumberAsync(tenantId, cancellationToken);
                 }
             }
 
@@ -108,27 +127,33 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
             if (variant != null)
             {
                 var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
-                var qtyInBaseUnits = (int)(itemDto.Quantity * variant.ConversionFactor);
+                var qtyInBaseUnits = itemDto.BaseQuantity.HasValue 
+                    ? (int)itemDto.BaseQuantity.Value 
+                    : (int)(itemDto.Quantity * variant.ConversionFactor);
 
                 var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, request.Dto.StoreId);
                 if (inventory != null)
                 {
                     inventory.QuantityOnHand -= qtyInBaseUnits;
                 }
-                // Optional: Handle out-of-stock scenarios or logs
             }
 
             // ── Gift Card Issuance / Top-up ──────────────────────────────────
             if (itemDto.IsGiftCardSale && !string.IsNullOrEmpty(itemDto.GiftCardNumber))
             {
-                var existingCard = await _giftCardRepository.GetByCardNumberAsync(_tenantContext.TenantId!.Value, itemDto.GiftCardNumber);
+                var existingCard = await _giftCardRepository.GetByCardNumberAsync(tenantId, itemDto.GiftCardNumber);
                 if (existingCard != null)
                 {
-                    // If it exists, we just add the balance (Top-up or Activation)
+                    var balBefore = existingCard.Balance;
                     existingCard.Balance += lineTotal;
-                    existingCard.IsActive = true; // Ensure it's active
+                    existingCard.IsActive = true;
                     if (existingCard.IssuingStoreId == null) existingCard.IssuingStoreId = request.Dto.StoreId;
                     
+                    if (existingCard.CustomerId == null && entity.CustomerId.HasValue)
+                    {
+                        existingCard.CustomerId = entity.CustomerId;
+                    }
+
                     if (!string.IsNullOrEmpty(itemDto.GiftCardPin))
                     {
                         if (string.IsNullOrEmpty(existingCard.PinHash))
@@ -146,24 +171,56 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                     }
 
                     _giftCardRepository.Update(existingCard);
+
+                    await _giftCardTxRepository.AddAsync(new GiftCardTransaction
+                    {
+                        TenantId = tenantId,
+                        GiftCardId = existingCard.Id,
+                        Type = GiftCardTransactionType.TopUp,
+                        Amount = lineTotal,
+                        BalanceBefore = balBefore,
+                        BalanceAfter = existingCard.Balance,
+                        Method = PaymentMethod.Cash,
+                        Reference = $"Receipt #{entity.ReceiptNumber}",
+                        StoreId = request.Dto.StoreId,
+                        StaffId = entity.CashierId,
+                        Notes = $"Till top-up on Order #{entity.ReceiptNumber}",
+                        CreatedAt = DateTimeOffset.UtcNow
+                    });
                 }
                 else
                 {
-                    // If it doesn't exist, create it
                     var giftCard = new POS.Domain.Entities.GiftCard
                     {
-                        TenantId = _tenantContext.TenantId!.Value,
+                        TenantId = tenantId,
                         CardNumber = itemDto.GiftCardNumber,
                         Balance = lineTotal,
                         InitialValue = lineTotal,
+                        CustomerId = entity.CustomerId,
                         PinHash = !string.IsNullOrEmpty(itemDto.GiftCardPin) 
                             ? _passwordService.Hash(itemDto.GiftCardPin) 
                             : null,
-                        IsActive = true,
+                        IsActive = itemDto.ActivateNow ?? false,
                         IssuedAt = DateTimeOffset.UtcNow,
                         IssuingStoreId = request.Dto.StoreId
                     };
                     await _giftCardRepository.AddAsync(giftCard);
+
+                    await _giftCardTxRepository.AddAsync(new GiftCardTransaction
+                    {
+                        TenantId = tenantId,
+                        GiftCardId = giftCard.Id,
+                        Type = GiftCardTransactionType.Issuance,
+                        Amount = lineTotal,
+                        BalanceBefore = 0,
+                        BalanceAfter = lineTotal,
+                        Method = PaymentMethod.Cash,
+                        Reference = $"Receipt #{entity.ReceiptNumber}",
+                        StoreId = request.Dto.StoreId,
+                        StaffId = entity.CashierId,
+                        Notes = $"Till issuance on Order #{entity.ReceiptNumber}",
+                        CreatedAt = DateTimeOffset.UtcNow
+                    });
                 }
             }
         }
@@ -191,12 +248,77 @@ public class CreateTransactionCommandHandler : IRequestHandler<CreateTransaction
                 entity.Payments.Add(paymentEntity);
                 entity.AmountPaid += p.Amount;
                 entity.ChangeGiven += paymentEntity.ChangeGiven ?? 0m;
+
+                // Deduct Gift Card balance & record audit if redeemed
+                if (p.GiftCardId.HasValue && p.Method == PaymentMethod.GiftCard)
+                {
+                    var card = await _giftCardRepository.GetByIdAsync(p.GiftCardId.Value);
+                    if (card != null)
+                    {
+                        // Auto-assign customer to transaction if card is linked and transaction has none
+                        if (entity.CustomerId == null && card.CustomerId.HasValue)
+                        {
+                            entity.CustomerId = card.CustomerId;
+                        }
+
+                        var balBefore = card.Balance;
+                        card.Balance = Math.Max(0, card.Balance - p.Amount);
+
+                        _giftCardRepository.Update(card);
+
+                        await _giftCardTxRepository.AddAsync(new GiftCardTransaction
+                        {
+                            TenantId = tenantId,
+                            GiftCardId = card.Id,
+                            Type = GiftCardTransactionType.Redemption,
+                            Amount = p.Amount,
+                            BalanceBefore = balBefore,
+                            BalanceAfter = card.Balance,
+                            Method = PaymentMethod.GiftCard,
+                            Reference = $"Order #{entity.ReceiptNumber}",
+                            StoreId = request.Dto.StoreId,
+                            StaffId = entity.CashierId,
+                            Notes = $"Redemption on Order #{entity.ReceiptNumber}",
+                            CreatedAt = DateTimeOffset.UtcNow
+                        });
+                    }
+                }
             }
 
             if (entity.AmountPaid >= entity.GrandTotal)
             {
                 entity.Status = POS.Domain.Enums.TransactionStatus.Completed;
                 entity.CompletedAt = DateTimeOffset.UtcNow;
+
+                // ── Loyalty Points Accrual ──────────────────────────────
+                if (entity.CustomerId.HasValue)
+                {
+                    var tenant = await _tenantRepository.GetByIdAsync(tenantId);
+                    if (tenant != null && tenant.LoyaltyProgramEnabled && tenant.LoyaltyPointsEarnRate > 0)
+                    {
+                        var customer = await _customerRepository.GetByIdAsync(entity.CustomerId.Value);
+                        if (customer != null)
+                        {
+                            var pointsEarned = (int)(entity.GrandTotal / tenant.LoyaltyPointsEarnRate);
+                            if (pointsEarned > 0)
+                            {
+                                entity.PointsEarned = pointsEarned;
+                                customer.PointsBalance += pointsEarned;
+                                _customerRepository.Update(customer);
+
+                                await _loyaltyLedgerRepository.AddAsync(new LoyaltyLedgerEntry
+                                {
+                                    CustomerId = customer.Id,
+                                    TransactionId = entity.Id,
+                                    Delta = pointsEarned,
+                                    Reason = $"Order #{entity.ReceiptNumber}",
+                                    BalanceAfter = customer.PointsBalance,
+                                    CreatedAt = DateTimeOffset.UtcNow
+                                });
+                            }
+                        }
+                    }
+                }
             }
         }
 

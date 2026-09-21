@@ -44,13 +44,20 @@ public class CreateInventoryOrderCommandHandler : IRequestHandler<CreateInventor
             DestinationStoreId = request.Dto.DestinationStoreId,
             CreatedByStaffId = staffId,
             Notes = request.Dto.Notes,
+            DriverName = request.Dto.DriverName?.Trim(),
+            DriverPhone = request.Dto.DriverPhone?.Trim(),
+            VehiclePlateNumber = request.Dto.VehiclePlateNumber?.Trim(),
+            EstimatedDeliveryTime = request.Dto.EstimatedDeliveryTime,
             StockRequisitionId = request.Dto.StockRequisitionId,
             IsReferredTransfer = request.Dto.Type == InventoryOrderType.StoreToStore && _tenantContext.SystemRole != "StoreManager",
             Items = request.Dto.Items.Select(i => new InventoryOrderItem
             {
                 InventoryOrderId = Guid.Empty, // EF will fill this, but C# 11 requires it set if marked 'required'
                 VariantId = i.VariantId,
-                QuantityOrdered = i.QuantityOrdered
+                QuantityOrdered = i.QuantityOrdered,
+                BatchNumber = i.BatchNumber,
+                ProductionDate = i.ProductionDate,
+                ExpiryDate = i.ExpiryDate
             }).ToList()
         };
 

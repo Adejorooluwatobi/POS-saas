@@ -12,6 +12,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
     private readonly IInventoryRepository _inventoryRepository;
     private readonly IProductVariantRepository _variantRepository;
     private readonly IStockRequisitionRepository _requisitionRepository;
+    private readonly IStockMovementRepository _movementRepository;
     private readonly IUnitOfWork _uow;
     private readonly ITenantContext _tenantContext;
 
@@ -20,6 +21,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
         IInventoryRepository inventoryRepository,
         IProductVariantRepository variantRepository,
         IStockRequisitionRepository requisitionRepository,
+        IStockMovementRepository movementRepository,
         IUnitOfWork uow,
         ITenantContext tenantContext)
     {
@@ -27,6 +29,7 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
         _inventoryRepository = inventoryRepository;
         _variantRepository = variantRepository;
         _requisitionRepository = requisitionRepository;
+        _movementRepository = movementRepository;
         _uow = uow;
         _tenantContext = tenantContext;
     }
@@ -36,8 +39,8 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
         var order = await _orderRepository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException("Order not found.");
 
-        if (order.Status != InventoryOrderStatus.Received)
-            throw new InvalidOperationException("Order must be received to be approved.");
+        if (order.Status != InventoryOrderStatus.Received && order.Status != InventoryOrderStatus.Resolved)
+            throw new InvalidOperationException("Order must be received or resolved to be approved.");
 
         // Verification: only StoreManager can approve (based on user request)
         if (_tenantContext.SystemRole != "StoreManager" && !_tenantContext.IsSuperAdmin)
@@ -53,7 +56,10 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
 
             var baseVariantId = variant.IsBaseUnit ? variant.Id : variant.BaseVariantId!.Value;
             var receivedQty = item.QuantityReceived ?? 0;
-            var qtyInBaseUnits = (int)(receivedQty * variant.ConversionFactor);
+            
+            // Prefer the explicit base units count if provided (e.g. from mixed UOM receiving)
+            var qtyInBaseUnits = item.QuantityReceivedBaseUnits ?? 
+                                 (int)(receivedQty * variant.ConversionFactor);
 
             var inventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.DestinationStoreId);
             if (inventory == null)
@@ -73,46 +79,103 @@ public class ApproveInventoryOrderCommandHandler : IRequestHandler<ApproveInvent
                 inventory.QuantityOnHand += qtyInBaseUnits;
             }
 
-            // --- Subtract from Source Store ---
-            if (order.SourceStoreId.HasValue)
+            if (!string.IsNullOrWhiteSpace(item.BatchNumber) || item.ExpiryDate.HasValue)
             {
-                var sourceInventory = await _inventoryRepository.GetByVariantAndStoreAsync(baseVariantId, order.SourceStoreId.Value);
-                if (sourceInventory != null)
+                var batch = new Domain.Entities.InventoryBatch
                 {
-                    sourceInventory.QuantityOnHand -= qtyInBaseUnits;
-                }
-                // Note: If sourceInventory is null, it means the source store sent stock they didn't have recorded.
-                // We allow it to continue but subtract nothing, or we could throw an error. 
-                // In a professional POS, we'd usually allow negative stock if configured, or block it.
+                    TenantId = order.TenantId,
+                    InventoryId = inventory.Id,
+                    VariantId = baseVariantId,
+                    StoreId = order.DestinationStoreId,
+                    BatchNumber = !string.IsNullOrWhiteSpace(item.BatchNumber) 
+                        ? item.BatchNumber 
+                        : $"LOT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4].ToUpper()}",
+                    ProductionDate = item.ProductionDate,
+                    ExpiryDate = item.ExpiryDate,
+                    QuantityOnHand = qtyInBaseUnits,
+                    QuantityReserved = 0,
+                    ExpiryAlertPercentage = 30,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow
+                };
+                await _inventoryRepository.AddBatchAsync(batch);
             }
 
-            // Update Requisition fulfillment if linked
-            if (order.StockRequisitionId.HasValue)
+            // Create Stock Movement log for received goods
+            var movement = new Domain.Entities.StockMovement
             {
-                var requisition = await _requisitionRepository.GetByIdAsync(order.StockRequisitionId.Value);
-                if (requisition != null)
-                {
-                    var reqItem = requisition.Items.FirstOrDefault(ri => ri.VariantId == item.VariantId);
-                    if (reqItem != null)
-                    {
-                        reqItem.QuantityFulfilled += receivedQty;
-                    }
+                TenantId = order.TenantId,
+                StoreId = order.DestinationStoreId,
+                VariantId = baseVariantId,
+                QuantityChange = qtyInBaseUnits,
+                BalanceAfter = inventory.QuantityOnHand,
+                Reason = $"Received Order {order.OrderNumber}",
+                ReferenceId = order.Id,
+                ReferenceType = "InventoryOrder"
+            };
+            await _movementRepository.AddAsync(movement);
 
-                    // Check if all items in requisition are fulfilled
-                    if (requisition.Items.All(ri => ri.QuantityFulfilled >= ri.QuantityRequested))
-                    {
-                        requisition.Status = RequisitionStatus.FullyFulfilled;
-                    }
-                    else
-                    {
-                        requisition.Status = RequisitionStatus.PartiallyFulfilled;
-                    }
-                }
+            // Log shortage as Shrinkage/Damage
+            var originalOrderedQty = item.QuantityOrdered;
+            var shortage = originalOrderedQty - receivedQty;
+            
+            if (shortage > 0)
+            {
+                var shortageInBaseUnits = (int)(shortage * variant.ConversionFactor);
+                var reason = string.IsNullOrWhiteSpace(item.DamageNotes) ? "Shortage/Damage" : item.DamageNotes;
+                
+                var shortageMovement = new Domain.Entities.StockMovement
+                {
+                    TenantId = order.TenantId,
+                    StoreId = order.DestinationStoreId,
+                    VariantId = baseVariantId,
+                    QuantityChange = -shortageInBaseUnits,
+                    BalanceAfter = inventory.QuantityOnHand, // Doesn't deduct from *current* stock because we never added it. This just records the event.
+                    Reason = $"Shrinkage: {reason} (Order {order.OrderNumber})",
+                    ReferenceId = order.Id,
+                    ReferenceType = "Shrinkage"
+                };
+                await _movementRepository.AddAsync(shortageMovement);
             }
         }
 
         order.Status = InventoryOrderStatus.Approved;
         order.ApprovedByStaffId = _tenantContext.UserId;
+
+        // Update Requisition fulfillment if linked
+        if (order.StockRequisitionId.HasValue)
+        {
+            var requisition = await _requisitionRepository.GetByIdAsync(order.StockRequisitionId.Value);
+            if (requisition != null)
+            {
+                foreach (var item in order.Items)
+                {
+                    var reqItem = requisition.Items.FirstOrDefault(ri => ri.VariantId == item.VariantId);
+                    if (reqItem != null)
+                    {
+                        reqItem.QuantityFulfilled += (item.QuantityReceived ?? 0);
+                    }
+                }
+
+                // Check all fulfillment orders for this requisition
+                var otherOrders = requisition.FulfillmentOrders.Where(o => o.Id != order.Id).ToList();
+                var anyInTransitOrPending = otherOrders.Any(o => 
+                    o.Status == InventoryOrderStatus.Draft || 
+                    o.Status == InventoryOrderStatus.Dispatched || 
+                    o.Status == InventoryOrderStatus.Received);
+                var anyDisputed = otherOrders.Any(o => o.Status == InventoryOrderStatus.Disputed);
+
+                if (!anyInTransitOrPending && !anyDisputed)
+                {
+                    // All planned deliveries have been received and finalized without dispute!
+                    requisition.Status = RequisitionStatus.FullyFulfilled;
+                }
+                else
+                {
+                    requisition.Status = RequisitionStatus.PartiallyFulfilled;
+                }
+            }
+        }
 
         await _uow.SaveChangesAsync(cancellationToken);
     }

@@ -14,6 +14,10 @@ public class TerminalDto
     public DateTimeOffset? LastPingAt { get; set; }
     public string? PairingCode { get; set; }
     public string StoreName { get; set; } = default!;
+    public string? StoreAddress { get; set; }
+    public string? StoreCity { get; set; }
+    public string? StorePhone { get; set; }
+    public string? TenantEmail { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 

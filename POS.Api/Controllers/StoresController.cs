@@ -12,7 +12,7 @@ namespace POS.Api.Controllers;
 
 [ApiController]
 [Route("api/stores")]
-[Authorize(Policy = "AdminOnly")]
+[Authorize]
 public class StoresController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -34,6 +34,7 @@ public class StoresController : ControllerBase
         => Ok(await _mediator.Send(new POS.Application.Queries.Store.GetDetails.GetStoreDetailsQuery(id, year, month)));
 
     [HttpPost]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Create([FromBody] CreateStoreDto dto)
     {
         var result = await _mediator.Send(new CreateStoreCommand(dto));
@@ -41,6 +42,7 @@ public class StoresController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStoreDto dto)
     {
         await _mediator.Send(new UpdateStoreCommand(id, dto));
@@ -48,6 +50,7 @@ public class StoresController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "TenantAdminOnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteStoreCommand(id));

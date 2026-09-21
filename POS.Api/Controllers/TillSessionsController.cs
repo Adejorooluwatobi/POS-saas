@@ -31,6 +31,7 @@ public class TillSessionsController : ControllerBase
 
     /// <summary>Opens a new till session (cashier clocks in at a terminal).</summary>
     [HttpPost]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Open([FromBody] CreateTillSessionDto dto)
     {
         var result = await _mediator.Send(new CreateTillSessionCommand(dto));
@@ -39,6 +40,7 @@ public class TillSessionsController : ControllerBase
 
     /// <summary>Closes or updates a till session (reconciliation, closing float).</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "TenantStaffOnly")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTillSessionDto dto)
     {
         await _mediator.Send(new UpdateTillSessionCommand(id, dto));

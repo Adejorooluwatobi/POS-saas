@@ -51,6 +51,10 @@ public class ApproveStockRequisitionCommandHandler : IRequestHandler<ApproveStoc
 
         foreach (var plan in request.Dto.FulfillmentPlans)
         {
+            var validItems = plan.Items.Where(i => i.Quantity > 0).ToList();
+            if (!validItems.Any())
+                continue;
+
             var orderNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
             
             var order = new Domain.Entities.InventoryOrder
@@ -64,11 +68,14 @@ public class ApproveStockRequisitionCommandHandler : IRequestHandler<ApproveStoc
                 CreatedByStaffId = staffId,
                 StockRequisitionId = requisition.Id,
                 IsReferredTransfer = plan.SourceStoreId.HasValue,
-                Items = plan.Items.Select(i => new InventoryOrderItem
+                Items = validItems.Select(i => new InventoryOrderItem
                 {
                     InventoryOrderId = Guid.Empty,
                     VariantId = i.VariantId,
-                    QuantityOrdered = i.Quantity
+                    QuantityOrdered = i.Quantity,
+                    BatchNumber = i.BatchNumber,
+                    ProductionDate = i.ProductionDate,
+                    ExpiryDate = i.ExpiryDate
                 }).ToList()
             };
 

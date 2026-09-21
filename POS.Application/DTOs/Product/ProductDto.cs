@@ -38,6 +38,7 @@ public class ProductVariantDto
     public decimal BasePrice { get; set; }
     public decimal? CostPrice { get; set; }
     public string UnitOfMeasure { get; set; } = "Each";
+    public decimal ConversionFactor { get; set; } = 1m;
 }
 
 public class StoreProductOverrideDto

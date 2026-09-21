@@ -46,7 +46,10 @@ public class RegisterCustomerCommandHandler : IRequestHandler<RegisterCustomerCo
             Phone = request.Dto.Phone,
             PasswordHash = _passwordService.Hash(request.Dto.Password),
             IsActive = true,
-            Tier = CustomerTier.Bronze
+            Tier = CustomerTier.Bronze,
+            IsSelfRegistered = true,
+            RegisteredStoreId = null,
+            RegisteredByStaffId = null
         };
 
         await _customerRepo.AddAsync(customer);

@@ -21,4 +21,5 @@ public class Inventory : BaseEntity
     // Navigation
     public ProductVariant Variant { get; set; } = null!;
     public Store Store { get; set; } = null!;
+    public ICollection<InventoryBatch> Batches { get; set; } = [];
 }

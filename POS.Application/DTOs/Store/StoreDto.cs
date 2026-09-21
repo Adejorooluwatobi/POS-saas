@@ -13,6 +13,7 @@ public class StoreDto
     public string? Phone { get; set; }
     public string Timezone { get; set; } = default!;
     public bool IsActive { get; set; }
+    public string? TenantEmail { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

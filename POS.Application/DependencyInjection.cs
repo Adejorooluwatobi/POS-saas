@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         // Register AutoMapper
         services.AddAutoMapper(cfg => cfg.AddMaps(Assembly.GetExecutingAssembly()));
+        services.AddTransient<MaskedIdentityResolver>();
 
         // Register MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));

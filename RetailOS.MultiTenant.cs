@@ -665,6 +665,9 @@ public class SuperAdminService
 
     public async Task<PlatformMetricsDto> GetPlatformMetricsAsync()
     {
+        var now = DateTimeOffset.UtcNow;
+        var today = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero);
+
         return new PlatformMetricsDto
         {
             TotalTenants   = await _db.Tenants.CountAsync(),
@@ -673,7 +676,7 @@ public class SuperAdminService
             TotalTransactions = await _db.Transactions.CountAsync(),
             TodayRevenue   = await _db.Transactions
                 .Where(t => t.Status == TransactionStatus.Completed
-                         && t.CompletedAt >= DateTimeOffset.UtcNow.Date)
+                         && t.CompletedAt >= today)
                 .SumAsync(t => t.GrandTotal),
         };
     }

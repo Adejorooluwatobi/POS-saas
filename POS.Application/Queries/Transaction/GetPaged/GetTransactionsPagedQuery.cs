@@ -4,4 +4,4 @@ using POS.Domain.Common;
 
 namespace POS.Application.Queries.Transaction.GetPaged;
 
-public record GetTransactionsPagedQuery(int PageNumber, int PageSize) : IRequest<PagedResult<TransactionDto>>;
+public record GetTransactionsPagedQuery(int PageNumber, int PageSize, Guid? CashierId = null) : IRequest<PagedResult<TransactionDto>>;

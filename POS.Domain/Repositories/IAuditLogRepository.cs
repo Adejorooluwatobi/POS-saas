@@ -6,4 +6,5 @@ namespace POS.Domain.Repositories;
 public interface IAuditLogRepository : IGenericRepository<AuditLog>
 {
     Task<PagedResult<AuditLog>> GetPagedByTenantAsync(Guid tenantId, int pageNumber, int pageSize);
+    Task<AuditLog?> GetByIdWithDetailsAsync(Guid id);
 }
