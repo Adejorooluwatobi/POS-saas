@@ -4,8 +4,10 @@ public class UpdateTenantDto
 {
     public Guid Id { get; set; }
     public string BusinessName { get; set; } = default!;
+    public string? Slug { get; set; }
     public string ContactEmail { get; set; } = default!;
     public string? ContactPhone { get; set; }
+    public string? Country { get; set; }
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; }
 }
