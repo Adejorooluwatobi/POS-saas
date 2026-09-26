@@ -65,20 +65,20 @@ public class RetailOsDbContext : DbContext
 
         // ── GLOBAL QUERY FILTERS (Multi-Tenancy) ─────────────────────────────
         // Tenant can only see their own record (SuperAdmin sees all)
-        modelBuilder.Entity<Tenant>().HasQueryFilter(t => _tenant.TenantId == null || t.Id == _tenant.TenantId);
+        modelBuilder.Entity<Tenant>().HasQueryFilter(t => _tenant.IsSuperAdmin || _tenant.TenantId == null || t.Id == _tenant.TenantId);
 
         // Core tenant-scoped entities
         modelBuilder.Entity<Store>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Staff>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<Staff>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Customer>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Product>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId || _tenant.SystemRole == "SuperAdmin" || _tenant.SystemRole == "TenantAdmin" || _tenant.SystemRole == "Manager"));
+        modelBuilder.Entity<Product>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId));
         modelBuilder.Entity<ProductVariant>().HasQueryFilter(v => _tenant.TenantId == null || v.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<PricingRule>().HasQueryFilter(p => _tenant.TenantId == null || p.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<PricingRule>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Role>().HasQueryFilter(r => _tenant.TenantId == null || r.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Promotion>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId));
         modelBuilder.Entity<GiftCard>().HasQueryFilter(g => _tenant.TenantId == null || g.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<AuditLog>().HasQueryFilter(a => _tenant.TenantId == null || a.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<AuditLog>().HasQueryFilter(a => (_tenant.TenantId == null || a.TenantId == _tenant.TenantId) && (a.StoreId == null || _tenant.StoreId == null || a.StoreId == _tenant.StoreId));
         modelBuilder.Entity<TenantSubscription>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
         modelBuilder.Entity<StoreProductOverride>().HasQueryFilter(o => (_tenant.TenantId == null || o.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || o.StoreId == _tenant.StoreId));
         modelBuilder.Entity<ProductBarcode>().HasQueryFilter(b => (_tenant.TenantId == null || b.TenantId == _tenant.TenantId) && (b.StoreId == null || _tenant.StoreId == null || b.StoreId == _tenant.StoreId));
@@ -97,7 +97,7 @@ public class RetailOsDbContext : DbContext
         modelBuilder.Entity<TillSession>().HasQueryFilter(s => (_tenant.TenantId == null || s.Staff.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.Terminal.StoreId == _tenant.StoreId));
         
         modelBuilder.Entity<LoyaltyLedgerEntry>().HasQueryFilter(l => _tenant.TenantId == null || l.Customer.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<GiftCardTransaction>().HasQueryFilter(t => _tenant.TenantId == null || t.TenantId == _tenant.TenantId);
+        modelBuilder.Entity<GiftCardTransaction>().HasQueryFilter(t => (_tenant.TenantId == null || t.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || t.StoreId == _tenant.StoreId));
         
         modelBuilder.Entity<Coupon>().HasQueryFilter(c => _tenant.TenantId == null || c.Promotion.TenantId == _tenant.TenantId);
 
