@@ -110,9 +110,9 @@ public class LoyaltyController : ControllerBase
     }
 
     [HttpGet("settings")]
-    public async Task<IActionResult> GetLoyaltySettings()
+    public async Task<IActionResult> GetLoyaltySettings([FromQuery] Guid? tenantId = null)
     {
-        var settings = await _mediator.Send(new GetLoyaltySettingsQuery());
+        var settings = await _mediator.Send(new GetLoyaltySettingsQuery(tenantId));
         return Ok(settings);
     }
 

@@ -35,9 +35,27 @@ public class HttpTenantContext : ITenantContext
         TraceId = context.TraceIdentifier;
         RequestPath = context.Request.Path;
 
+        SystemRole = user.FindFirst("system_role")?.Value ?? "Cashier";
+
         // Identity Info
         var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
-        TenantId = tenantIdClaim != null ? Guid.Parse(tenantIdClaim) : null;
+        if (!string.IsNullOrEmpty(tenantIdClaim) && Guid.TryParse(tenantIdClaim, out var tid))
+        {
+            TenantId = tid;
+        }
+        else if (SystemRole == "SuperAdmin")
+        {
+            // Allow SuperAdmin to scope context via header or query string
+            var headerTenant = context.Request.Headers["X-Tenant-Id"].ToString();
+            if (!string.IsNullOrEmpty(headerTenant) && Guid.TryParse(headerTenant, out var parsedTenantId))
+            {
+                TenantId = parsedTenantId;
+            }
+            else if (context.Request.Query.TryGetValue("tenantId", out var qTenant) && Guid.TryParse(qTenant.ToString(), out var qTenantId))
+            {
+                TenantId = qTenantId;
+            }
+        }
 
         var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         UserId = userIdClaim != null ? Guid.Parse(userIdClaim) : null;
@@ -45,13 +63,27 @@ public class HttpTenantContext : ITenantContext
         UserName = user.FindFirst(ClaimTypes.Name)?.Value;
 
         var storeIdClaim = user.FindFirst("store_id")?.Value;
-        StoreId = storeIdClaim != null ? Guid.Parse(storeIdClaim) : null;
+        if (!string.IsNullOrEmpty(storeIdClaim) && Guid.TryParse(storeIdClaim, out var sid))
+        {
+            StoreId = sid;
+        }
+        else if (SystemRole == "SuperAdmin" || SystemRole == "TenantAdmin" || SystemRole == "Manager")
+        {
+            // Allow SuperAdmin and TenantAdmin to scope store via header or query string
+            var headerStore = context.Request.Headers["X-Store-Id"].ToString();
+            if (!string.IsNullOrEmpty(headerStore) && Guid.TryParse(headerStore, out var parsedStoreId))
+            {
+                StoreId = parsedStoreId;
+            }
+            else if (context.Request.Query.TryGetValue("storeId", out var qStore) && Guid.TryParse(qStore.ToString(), out var qStoreId))
+            {
+                StoreId = qStoreId;
+            }
+        }
 
         var terminalIdClaim = user.FindFirst("terminal_id")?.Value 
             ?? context.Request.Headers["X-Terminal-Id"].ToString();
-        if (!string.IsNullOrEmpty(terminalIdClaim) && Guid.TryParse(terminalIdClaim, out var tid))
-            TerminalId = tid;
-
-        SystemRole = user.FindFirst("system_role")?.Value ?? "Cashier";
+        if (!string.IsNullOrEmpty(terminalIdClaim) && Guid.TryParse(terminalIdClaim, out var terminalId))
+            TerminalId = terminalId;
     }
 }
