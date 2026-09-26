@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using POS.Application.DTOs;
 using POS.Domain.Interfaces;
@@ -18,13 +20,29 @@ public class GetLoyaltySettingsQueryHandler : IRequestHandler<GetLoyaltySettings
 
     public async Task<LoyaltySettingsDto> Handle(GetLoyaltySettingsQuery request, CancellationToken cancellationToken)
     {
-        if (_tenantContext.TenantId is null)
-            throw new InvalidOperationException("No tenant context is available.");
+        var tenantId = request.TenantId ?? _tenantContext.TenantId;
+        if (tenantId is null)
+        {
+            // SuperAdmin global scope or unselected tenant: return safe defaults without throwing
+            return new LoyaltySettingsDto
+            {
+                LoyaltyProgramEnabled = true,
+                LoyaltyPointsEarnRate = 100,
+                LoyaltyPointRedeemRate = 1,
+                LoyaltyMinRedemptionPoints = 50
+            };
+        }
 
-        var tenant = await _tenantRepository.GetByIdAsync(_tenantContext.TenantId.Value);
+        var tenant = await _tenantRepository.GetByIdAsync(tenantId.Value);
         if (tenant is null)
         {
-            return new LoyaltySettingsDto();
+            return new LoyaltySettingsDto
+            {
+                LoyaltyProgramEnabled = true,
+                LoyaltyPointsEarnRate = 100,
+                LoyaltyPointRedeemRate = 1,
+                LoyaltyMinRedemptionPoints = 50
+            };
         }
 
         return new LoyaltySettingsDto
