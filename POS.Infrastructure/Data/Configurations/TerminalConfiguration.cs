@@ -16,6 +16,7 @@ public class TerminalConfiguration : IEntityTypeConfiguration<Terminal>
         builder.Property(t => t.Label).HasMaxLength(100);
         builder.Property(t => t.IpAddress).HasMaxLength(45);
         builder.Property(t => t.Status).HasConversion<string>().IsRequired();
+        builder.Ignore(t => t.IsLeaseActive);
 
         builder.HasIndex(t => t.TerminalCode).IsUnique();
         builder.HasIndex(t => t.StoreId);

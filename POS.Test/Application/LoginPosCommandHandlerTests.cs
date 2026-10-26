@@ -15,6 +15,8 @@ public class LoginPosCommandHandlerTests
     private readonly IStaffRepository _staffRepo;
     private readonly IStoreRepository _storeRepo;
     private readonly ITenantRepository _tenantRepo;
+    private readonly ITenantSubscriptionRepository _subRepo;
+    private readonly ITerminalRepository _terminalRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
     private readonly LoginPosCommandHandler _handler;
@@ -24,6 +26,8 @@ public class LoginPosCommandHandlerTests
         _staffRepo = Substitute.For<IStaffRepository>();
         _storeRepo = Substitute.For<IStoreRepository>();
         _tenantRepo = Substitute.For<ITenantRepository>();
+        _subRepo = Substitute.For<ITenantSubscriptionRepository>();
+        _terminalRepo = Substitute.For<ITerminalRepository>();
         _passwordService = Substitute.For<IPasswordService>();
         _tokenService = Substitute.For<ITokenService>();
 
@@ -31,6 +35,8 @@ public class LoginPosCommandHandlerTests
             _staffRepo,
             _storeRepo,
             _tenantRepo,
+            _subRepo,
+            _terminalRepo,
             _passwordService,
             _tokenService
         );

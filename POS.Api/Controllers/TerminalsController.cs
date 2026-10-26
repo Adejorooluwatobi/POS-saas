@@ -56,6 +56,24 @@ public class TerminalsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Disconnects a terminal, revoking its active token and freeing its quota slot while preserving records.</summary>
+    [HttpPost("{id:guid}/disconnect")]
+    [Authorize(Policy = "TenantAdminOnly")]
+    public async Task<IActionResult> Disconnect(Guid id)
+    {
+        var result = await _mediator.Send(new POS.Application.Commands.Terminal.Disconnect.DisconnectTerminalCommand(id));
+        return Ok(result);
+    }
+
+    /// <summary>Generates a fresh 6-digit reconnect PIN for an existing disconnected or expiring terminal.</summary>
+    [HttpPost("{id:guid}/reconnect-pin")]
+    [Authorize(Policy = "TenantAdminOnly")]
+    public async Task<IActionResult> GenerateReconnectPin(Guid id)
+    {
+        var result = await _mediator.Send(new POS.Application.Commands.Terminal.ReconnectPin.GenerateTerminalReconnectPinCommand(id));
+        return Ok(result);
+    }
+
     /// <summary>Updates terminal label, IP address, or status.</summary>
     [HttpPut("{id:guid}")]
     [Authorize(Policy = "TenantAdminOnly")]

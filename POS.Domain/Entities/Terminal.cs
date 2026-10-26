@@ -15,10 +15,18 @@ public class Terminal : AuditableEntity
     public TerminalStatus Status { get; set; } = TerminalStatus.Offline;
     public DateTimeOffset? LastPingAt { get; set; }
     
-    // Device Pairing
+    // Device Pairing & 30-Day Lease
     public string? PairingCode { get; set; }
     public string? DeviceToken { get; set; }
     public DateTimeOffset? PairingCodeExpiresAt { get; set; }
+    public DateTimeOffset? LeaseExpiresAt { get; set; }
+    public DateTimeOffset? DisconnectedAt { get; set; }
+    public string? DisconnectedBy { get; set; }
+
+    public bool IsLeaseActive => Status != TerminalStatus.Disconnected 
+                              && !string.IsNullOrEmpty(DeviceToken) 
+                              && LeaseExpiresAt.HasValue 
+                              && LeaseExpiresAt.Value > DateTimeOffset.UtcNow;
 
     // Navigation
     public Store Store { get; set; } = null!;

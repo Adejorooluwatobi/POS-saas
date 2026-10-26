@@ -4,7 +4,7 @@ namespace POS.Application.DTOs.Auth;
 public record AdminLoginDto(string Email, string Password);
 
 /// <summary>Used by Cashiers to log into physical Store Terminals quickly.</summary>
-public record PosLoginDto(Guid StoreId, string EmployeeNo, string Pin);
+public record PosLoginDto(Guid StoreId, string EmployeeNo, string Pin, Guid? TerminalId = null);
 
 /// <summary>Used by Consumers logging into a loyalty website/app.</summary>
 public record CustomerLoginDto(string EmailOrPhone, string Password);

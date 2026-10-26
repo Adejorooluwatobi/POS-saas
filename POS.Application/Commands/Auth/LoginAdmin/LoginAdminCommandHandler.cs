@@ -15,6 +15,7 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
     private readonly IStaffRepository _staffRepo;
     private readonly IStoreRepository _storeRepo;
     private readonly ITenantRepository _tenantRepo;
+    private readonly ITenantSubscriptionRepository _subscriptionRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
 
@@ -22,12 +23,14 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
         IStaffRepository staffRepo,
         IStoreRepository storeRepo,
         ITenantRepository tenantRepo,
+        ITenantSubscriptionRepository subscriptionRepo,
         IPasswordService passwordService,
         ITokenService tokenService)
     {
         _staffRepo = staffRepo;
         _storeRepo = storeRepo;
         _tenantRepo = tenantRepo;
+        _subscriptionRepo = subscriptionRepo;
         _passwordService = passwordService;
         _tokenService = tokenService;
     }
@@ -55,6 +58,12 @@ public class LoginAdminCommandHandler : IRequestHandler<LoginAdminCommand, AuthR
             if (tenant != null && !tenant.IsActive)
             {
                 throw new UnauthorizedAccessException("Your organization has been suspended. Please contact support.");
+            }
+
+            var sub = await _subscriptionRepo.GetByTenantAsync(staff.TenantId);
+            if (sub != null && sub.IsExpired)
+            {
+                throw new UnauthorizedAccessException("Your organization subscription or free trial has expired. Please contact support to renew your plan.");
             }
         }
 

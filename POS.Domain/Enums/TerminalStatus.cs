@@ -4,5 +4,6 @@ public enum TerminalStatus
 {
     Online,
     Offline,
-    Maintenance
+    Maintenance,
+    Disconnected
 }

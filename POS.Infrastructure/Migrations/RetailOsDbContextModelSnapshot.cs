@@ -37,7 +37,7 @@ namespace POS.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "subscription_status", new[] { "trial", "active", "past_due", "cancelled", "suspended" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "system_role", new[] { "super_admin", "tenant_admin", "store_manager", "cashier", "supervisor", "manager" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "tax_category", new[] { "standard", "zero", "exempt", "reduced" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "terminal_status", new[] { "online", "offline", "maintenance" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "terminal_status", new[] { "online", "offline", "maintenance", "disconnected" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "transaction_status", new[] { "open", "in_progress", "payment_pending", "completed", "voided", "refunded" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "transaction_type", new[] { "sale", "return", "exchange", "void" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1668,7 +1668,7 @@ namespace POS.Infrastructure.Migrations
                             LoyaltyPointsEarnRate = 100m,
                             LoyaltyProgramEnabled = true,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 9, 20, 19, 36, 49, 65, DateTimeKind.Unspecified).AddTicks(1405), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 19, 55, 21, 734, DateTimeKind.Unspecified).AddTicks(131), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 
@@ -1747,6 +1747,12 @@ namespace POS.Infrastructure.Migrations
                     b.Property<string>("DeviceToken")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("DisconnectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisconnectedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(45)
                         .HasColumnType("character varying(45)");
@@ -1756,6 +1762,9 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<DateTimeOffset?>("LastPingAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PairingCode")

@@ -18,6 +18,10 @@ public class TerminalDto
     public string? StoreCity { get; set; }
     public string? StorePhone { get; set; }
     public string? TenantEmail { get; set; }
+    public DateTimeOffset? LeaseExpiresAt { get; set; }
+    public DateTimeOffset? DisconnectedAt { get; set; }
+    public string? DisconnectedBy { get; set; }
+    public bool IsLeaseActive { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }
 
