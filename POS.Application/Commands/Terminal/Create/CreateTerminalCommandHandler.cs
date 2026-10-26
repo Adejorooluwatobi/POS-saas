@@ -33,14 +33,24 @@ public class CreateTerminalCommandHandler : IRequestHandler<CreateTerminalComman
     {
         var tenantId = _tenantContext.TenantId ?? throw new UnauthorizedAccessException("Unable to determine the tenant.");
 
-        // ── Subscription Check ───────────────────────────────────────────
+        // ── Store Manager Scope Check ────────────────────────────────────
+        if (_tenantContext.SystemRole == "StoreManager" && _tenantContext.StoreId.HasValue && _tenantContext.StoreId.Value != request.StoreId)
+        {
+            throw new UnauthorizedAccessException("Branch managers can only register terminals for their assigned store.");
+        }
+
+        // ── Subscription Check (Only count active/connected terminals) ───
         var sub = await _subscriptionRepository.GetByTenantAsync(tenantId);
         if (sub != null)
         {
-            var currentTerminals = _repository.GetQueryable().Count(t => t.Store.TenantId == tenantId);
-            if (currentTerminals >= sub.MaxTerminals)
+            var activeTerminals = _repository.GetQueryable().Count(t => 
+                t.Store.TenantId == tenantId && 
+                t.Status != POS.Domain.Enums.TerminalStatus.Disconnected &&
+                (t.LeaseExpiresAt == null || t.LeaseExpiresAt > DateTimeOffset.UtcNow));
+
+            if (activeTerminals >= sub.MaxTerminals)
             {
-                throw new InvalidOperationException($"Terminal limit reached ({sub.MaxTerminals}). Please upgrade your subscription.");
+                throw new InvalidOperationException($"Active terminal limit reached ({sub.MaxTerminals}). Please disconnect an unused terminal or upgrade your subscription.");
             }
         }
 

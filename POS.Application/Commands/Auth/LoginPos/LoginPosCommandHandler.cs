@@ -14,6 +14,8 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
     private readonly IStaffRepository _staffRepo;
     private readonly IStoreRepository _storeRepo;
     private readonly ITenantRepository _tenantRepo;
+    private readonly ITenantSubscriptionRepository _subscriptionRepo;
+    private readonly ITerminalRepository _terminalRepo;
     private readonly IPasswordService _passwordService;
     private readonly ITokenService _tokenService;
 
@@ -21,12 +23,16 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
         IStaffRepository staffRepo,
         IStoreRepository storeRepo,
         ITenantRepository tenantRepo,
+        ITenantSubscriptionRepository subscriptionRepo,
+        ITerminalRepository terminalRepo,
         IPasswordService passwordService,
         ITokenService tokenService)
     {
         _staffRepo = staffRepo;
         _storeRepo = storeRepo;
         _tenantRepo = tenantRepo;
+        _subscriptionRepo = subscriptionRepo;
+        _terminalRepo = terminalRepo;
         _passwordService = passwordService;
         _tokenService = tokenService;
     }
@@ -51,6 +57,32 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
         if (tenant != null && !tenant.IsActive)
         {
             throw new UnauthorizedAccessException("Your organization has been suspended. Please contact support.");
+        }
+
+        // Check subscription
+        var sub = await _subscriptionRepo.GetByTenantAsync(staff.TenantId);
+        if (sub != null && sub.IsExpired)
+        {
+            throw new UnauthorizedAccessException("Your organization subscription or free trial has expired. POS terminal access is disabled.");
+        }
+
+        // Check terminal if provided
+        if (request.Dto.TerminalId.HasValue)
+        {
+            var terminal = await _terminalRepo.GetByIdAsync(request.Dto.TerminalId.Value);
+            if (terminal != null)
+            {
+                if (terminal.Status == TerminalStatus.Disconnected)
+                {
+                    throw new UnauthorizedAccessException("This workstation has been disconnected. Please enter a reconnect PIN to activate.");
+                }
+                if (terminal.LeaseExpiresAt.HasValue && terminal.LeaseExpiresAt.Value < DateTimeOffset.UtcNow)
+                {
+                    throw new UnauthorizedAccessException("This workstation's 30-day lease has expired. Please enter a new activation code.");
+                }
+                terminal.LastPingAt = DateTimeOffset.UtcNow;
+                _terminalRepo.Update(terminal);
+            }
         }
 
         var store = await _storeRepo.GetByIdAsync(request.Dto.StoreId);

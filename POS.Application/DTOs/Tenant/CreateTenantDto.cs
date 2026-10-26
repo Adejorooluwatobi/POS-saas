@@ -19,4 +19,10 @@ public class CreateTenantDto
     public int MaxStores { get; set; } = 1;
     public int MaxStaff { get; set; } = 5;
     public int MaxTerminals { get; set; } = 2;
+
+    // Subscription & Trial Duration
+    public POS.Domain.Enums.SubscriptionPlan Plan { get; set; } = POS.Domain.Enums.SubscriptionPlan.Starter;
+    public string DurationType { get; set; } = "30_DAYS"; // 14_DAYS, 30_DAYS, 60_DAYS, 90_DAYS, 1_YEAR, CUSTOM
+    public DateTimeOffset? CustomExpiryDate { get; set; }
+    public bool IsTrial { get; set; } = true;
 }

@@ -111,6 +111,7 @@ public class Program
                 });
 
             builder.Services.AddHttpClient();
+            builder.Services.AddMemoryCache();
 
             builder.Services.AddOpenApi(options =>
             {
@@ -236,6 +237,7 @@ public class Program
             app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<POS.Api.Middleware.TenantSubscriptionMiddleware>();
 
             app.UseSerilogRequestLogging(options =>
             {
