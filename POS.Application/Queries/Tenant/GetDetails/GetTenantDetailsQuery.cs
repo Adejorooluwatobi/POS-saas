@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.DTOs.Statistics;
@@ -13,6 +17,7 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
 {
     private readonly ITenantRepository _tenantRepo;
     private readonly IStoreRepository _storeRepo;
+    private readonly IStaffRepository _staffRepo;
     private readonly ITransactionRepository _transactionRepo;
     private readonly ITenantSubscriptionRepository _subscriptionRepo;
     private readonly ITenantContext _tenantContext;
@@ -20,12 +25,14 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
     public GetTenantDetailsQueryHandler(
         ITenantRepository tenantRepo,
         IStoreRepository storeRepo,
+        IStaffRepository staffRepo,
         ITransactionRepository transactionRepo,
         ITenantSubscriptionRepository subscriptionRepo,
         ITenantContext tenantContext)
     {
         _tenantRepo = tenantRepo;
         _storeRepo = storeRepo;
+        _staffRepo = staffRepo;
         _transactionRepo = transactionRepo;
         _subscriptionRepo = subscriptionRepo;
         _tenantContext = tenantContext;
@@ -38,7 +45,9 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
             throw new UnauthorizedAccessException("You are not authorized to view details for this organization.");
         }
 
-        var tenant = await _tenantRepo.GetByIdAsync(request.Id)
+        var tenant = await _tenantRepo.GetQueryable()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"Tenant {request.Id} not found.");
 
         var now = DateTimeOffset.UtcNow;
@@ -50,8 +59,8 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
         var startOfYear = new DateTimeOffset(now.Year, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
         // Revenue Base Query (Filtered by Tenant via Stores)
-        // Note: Transaction has StoreId, and Store has TenantId.
         var transactions = _transactionRepo.GetQueryable()
+            .IgnoreQueryFilters()
             .Include(t => t.Store)
             .Where(t => t.Store.TenantId == request.Id && t.Status == TransactionStatus.Completed);
 
@@ -77,6 +86,7 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
 
         // Stores list with their summary stats
         var stores = await _storeRepo.GetQueryable()
+            .IgnoreQueryFilters()
             .Where(s => s.TenantId == request.Id)
             .Select(s => new StoreSummaryDto
             {
@@ -90,9 +100,11 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
         foreach (var store in stores)
         {
             store.MonthlyRevenue = await _transactionRepo.GetQueryable()
+                .IgnoreQueryFilters()
                 .Where(t => t.StoreId == store.Id && t.Status == TransactionStatus.Completed && t.CreatedAt >= startOfMonth)
                 .SumAsync(t => t.GrandTotal, cancellationToken);
             store.LifetimeRevenue = await _transactionRepo.GetQueryable()
+                .IgnoreQueryFilters()
                 .Where(t => t.StoreId == store.Id && t.Status == TransactionStatus.Completed)
                 .SumAsync(t => t.GrandTotal, cancellationToken);
         }
@@ -113,6 +125,11 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
             CurrentPeriodEnd = subscription.CurrentPeriodEnd
         };
 
+        var adminStaff = await _staffRepo.GetQueryable()
+            .IgnoreQueryFilters()
+            .Where(s => s.TenantId == request.Id && s.SystemRole == SystemRole.TenantAdmin)
+            .FirstOrDefaultAsync(cancellationToken);
+
         return new TenantDetailsDto
         {
             Id = tenant.Id,
@@ -120,6 +137,11 @@ public class GetTenantDetailsQueryHandler : IRequestHandler<GetTenantDetailsQuer
             Slug = tenant.Slug,
             ContactEmail = tenant.ContactEmail,
             IsActive = tenant.IsActive,
+            IsDeleted = tenant.IsDeleted,
+            DeletedAt = tenant.DeletedAt,
+            OwnerEmail = adminStaff?.Email,
+            OwnerName = adminStaff?.FullName,
+            OwnerStaffId = adminStaff?.Id,
             Revenue = stats,
             Stores = stores,
             Subscription = subscriptionDto

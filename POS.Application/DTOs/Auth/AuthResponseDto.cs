@@ -13,6 +13,7 @@ public record AuthResponseDto(
     string? StoreAddress = null,
     string? StoreCity = null,
     string? StorePhone = null,
-    string? TenantEmail = null
+    string? TenantEmail = null,
+    bool MustChangePassword = false,
+    bool MustChangePin = false
 );
-

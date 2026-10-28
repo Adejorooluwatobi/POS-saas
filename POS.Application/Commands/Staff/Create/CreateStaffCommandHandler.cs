@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using POS.Application.DTOs;
@@ -44,7 +48,7 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
         var sub = await _subscriptionRepository.GetByTenantAsync(tenantId);
         if (sub != null)
         {
-            var currentStaff = _repository.GetQueryable().Count(s => s.TenantId == tenantId);
+            var currentStaff = _repository.GetQueryable().Count(s => s.TenantId == tenantId && !s.IsDeleted);
             if (currentStaff >= sub.MaxStaff)
             {
                 throw new InvalidOperationException($"Staff limit reached ({sub.MaxStaff}). Please upgrade your subscription.");
@@ -52,6 +56,9 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
         }
 
         var entity = _mapper.Map<Entity>(request.Dto);
+        entity.TenantId = tenantId;
+        entity.IsDeleted = false;
+        entity.Email = entity.Email.Trim().ToLowerInvariant();
 
         // 1. Resolve SystemRole from RoleId if provided
         if (request.Dto.RoleId.HasValue)
@@ -73,7 +80,7 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
 
         if (creatorRole is "SuperAdmin" or "TenantAdmin")
         {
-            // Admins can create any role (hierarchy validation still applies if needed, but usually Admins are top-level)
+            // Admins can create any role
         }
         else if (creatorRole == "Manager")
         {
@@ -104,17 +111,35 @@ public class CreateStaffCommandHandler : IRequestHandler<CreateStaffCommand, Sta
             throw new UnauthorizedAccessException("You do not have permission to create staff.");
         }
 
-        if (!_tenantContext.TenantId.HasValue)
-            throw new UnauthorizedAccessException("Unable to determine the tenant for this request. Ensure you are logged in as a tenant user.");
+        // 3. Auto-generate credentials
+        var plainPassword = string.IsNullOrWhiteSpace(request.Dto.Password)
+            ? _passwordService.GenerateRandomPassword()
+            : request.Dto.Password;
 
-        entity.TenantId = _tenantContext.TenantId.Value;
-        entity.PinHash = _passwordService.Hash(request.Dto.Pin);
+        var plainPin = string.IsNullOrWhiteSpace(request.Dto.Pin)
+            ? _passwordService.GenerateRandomPin()
+            : request.Dto.Pin;
 
-        if (!string.IsNullOrWhiteSpace(request.Dto.Password))
-            entity.PasswordHash = _passwordService.Hash(request.Dto.Password);
+        entity.PasswordHash = _passwordService.Hash(plainPassword);
+        entity.PinHash = _passwordService.Hash(plainPin);
+        entity.MustChangePassword = true;
+
+        // Cashiers are required to set their 4-digit PIN upon first login
+        if (entity.SystemRole == SystemRole.Cashier)
+        {
+            entity.MustChangePin = true;
+        }
 
         await _repository.AddAsync(entity);
         await _uow.SaveChangesAsync(cancellationToken);
-        return _mapper.Map<StaffDto>(entity);
+
+        var dto = _mapper.Map<StaffDto>(entity);
+        dto.GeneratedPassword = plainPassword;
+        dto.GeneratedPin = plainPin;
+        dto.HasPassword = true;
+        dto.HasPin = true;
+        dto.MustChangePassword = entity.MustChangePassword;
+        dto.MustChangePin = entity.MustChangePin;
+        return dto;
     }
 }

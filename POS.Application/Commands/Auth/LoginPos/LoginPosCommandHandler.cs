@@ -39,10 +39,11 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
 
     public async Task<AuthResponseDto> Handle(LoginPosCommand request, CancellationToken cancellationToken)
     {
-        var staff = await _staffRepo.GetByEmployeeNoAsync(request.Dto.StoreId, request.Dto.EmployeeNo);
+        var empNo = request.Dto.EmployeeNo?.Trim() ?? string.Empty;
+        var staff = await _staffRepo.GetByEmployeeNoAsync(request.Dto.StoreId, empNo);
 
         // We use Verify for PIN too since it's hashed for security
-        if (staff is null || !_passwordService.Verify(request.Dto.Pin, staff.PinHash))
+        if (staff is null || staff.IsDeleted || !_passwordService.Verify(request.Dto.Pin, staff.PinHash))
         {
             throw new UnauthorizedAccessException("Invalid POS credentials or unknown Store.");
         }
@@ -54,9 +55,9 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
 
         // Check if tenant is active
         var tenant = await _tenantRepo.GetByIdAsync(staff.TenantId);
-        if (tenant != null && !tenant.IsActive)
+        if (tenant != null && (!tenant.IsActive || tenant.IsDeleted))
         {
-            throw new UnauthorizedAccessException("Your organization has been suspended. Please contact support.");
+            throw new UnauthorizedAccessException("Your organization has been suspended or deleted. Please contact support.");
         }
 
         // Check subscription
@@ -92,7 +93,7 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
         }
 
         var roleStr = staff.SystemRole.ToString();
-        var token = _tokenService.GenerateToken(staff.Id, staff.EmployeeNo, roleStr, staff.FullName, staff.TenantId, staff.StoreId);
+        var token = _tokenService.GenerateToken(staff.Id, staff.EmployeeNo, roleStr, staff.FullName, staff.TenantId, staff.StoreId, staff.MustChangePassword, staff.MustChangePin);
 
         return new AuthResponseDto(
             token, 
@@ -107,7 +108,9 @@ public class LoginPosCommandHandler : IRequestHandler<LoginPosCommand, AuthRespo
             store?.Address,
             store?.City,
             store?.Phone,
-            tenant?.ContactEmail
+            tenant?.ContactEmail,
+            staff.MustChangePassword,
+            staff.MustChangePin
         );
     }
 }

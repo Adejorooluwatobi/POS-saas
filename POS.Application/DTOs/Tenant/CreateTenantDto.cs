@@ -11,7 +11,7 @@ public class CreateTenantDto
 
     // Admin Account
     public string AdminEmail { get; set; } = default!;
-    public string AdminPassword { get; set; } = default!;
+    public string? AdminPassword { get; set; }
     public string AdminFirstName { get; set; } = default!;
     public string AdminLastName { get; set; } = default!;
 

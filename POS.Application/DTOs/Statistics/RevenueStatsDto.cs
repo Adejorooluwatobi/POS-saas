@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace POS.Application.DTOs.Statistics;
 
 public class RevenueStatsDto
@@ -31,6 +34,11 @@ public class TenantDetailsDto
     public string Slug { get; set; } = null!;
     public string ContactEmail { get; set; } = null!;
     public bool IsActive { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
+    public string? OwnerEmail { get; set; }
+    public string? OwnerName { get; set; }
+    public Guid? OwnerStaffId { get; set; }
     public RevenueStatsDto Revenue { get; set; } = new();
     public List<StoreSummaryDto> Stores { get; set; } = [];
     public TenantSubscriptionSummaryDto? Subscription { get; set; }

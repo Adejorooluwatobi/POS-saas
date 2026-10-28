@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using POS.Application.DTOs;
@@ -32,6 +35,11 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, T
     public async Task<TenantDto> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
         var tenant = _mapper.Map<Entity>(request.Dto);
+        tenant.IsDeleted = false;
+        if (!string.IsNullOrWhiteSpace(tenant.ContactEmail))
+        {
+            tenant.ContactEmail = tenant.ContactEmail.Trim().ToLowerInvariant();
+        }
         
         // 1. Setup Subscription
         var now = DateTimeOffset.UtcNow;
@@ -63,20 +71,30 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, T
             TrialEndsAt = request.Dto.IsTrial ? periodEnd : null
         };
 
-        // 2. Setup Admin Staff
-        var adminPassword = _passwordService.Hash(request.Dto.AdminPassword);
+        // 2. Setup Admin Staff & Credentials
+        var plainPassword = string.IsNullOrWhiteSpace(request.Dto.AdminPassword)
+            ? _passwordService.GenerateRandomPassword()
+            : request.Dto.AdminPassword;
+
+        var plainPin = _passwordService.GenerateRandomPin();
+        var adminPasswordHash = _passwordService.Hash(plainPassword);
+        var adminPinHash = _passwordService.Hash(plainPin);
+
         var adminStaff = new POS.Domain.Entities.Staff
         {
             TenantId = tenant.Id,
             SystemRole = POS.Domain.Enums.SystemRole.TenantAdmin,
             EmployeeNo = $"{request.Dto.Slug.ToUpper()}-ADM",
-            Email = request.Dto.AdminEmail,
+            Email = request.Dto.AdminEmail.Trim().ToLowerInvariant(),
             FirstName = request.Dto.AdminFirstName,
             LastName = request.Dto.AdminLastName,
-            PasswordHash = adminPassword,
-            PinHash = adminPassword, // Shared for now
+            PasswordHash = adminPasswordHash,
+            PinHash = adminPinHash,
             HiredAt = DateOnly.FromDateTime(DateTime.Today),
-            IsActive = true
+            IsActive = true,
+            IsDeleted = false,
+            MustChangePassword = true,
+            MustChangePin = false
         };
 
         await _repository.AddAsync(tenant);
@@ -84,6 +102,11 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, T
         
         await _uow.SaveChangesAsync(cancellationToken);
         
-        return _mapper.Map<TenantDto>(tenant);
+        var dto = _mapper.Map<TenantDto>(tenant);
+        dto.GeneratedPassword = plainPassword;
+        dto.OwnerEmail = adminStaff.Email;
+        dto.OwnerName = adminStaff.FullName;
+        dto.OwnerStaffId = adminStaff.Id;
+        return dto;
     }
 }

@@ -21,14 +21,18 @@ public class StaffConfiguration : IEntityTypeConfiguration<Staff>
         builder.Property(s => s.PasswordHash).HasMaxLength(255);
         builder.Property(s => s.FirstName).IsRequired().HasMaxLength(100);
         builder.Property(s => s.LastName).IsRequired().HasMaxLength(100);
+        builder.Property(s => s.IsDeleted).HasDefaultValue(false);
+        builder.Property(s => s.MustChangePassword).HasDefaultValue(false);
+        builder.Property(s => s.MustChangePin).HasDefaultValue(false);
 
         builder.Ignore(s => s.FullName);
 
-        // Per-tenant uniqueness: two different tenants may share the same EmployeeNo or Email
-        builder.HasIndex(s => new { s.TenantId, s.EmployeeNo }).IsUnique().HasDatabaseName("IX_Staff_TenantId_EmployeeNo");
-        builder.HasIndex(s => new { s.TenantId, s.Email }).IsUnique().HasDatabaseName("IX_Staff_TenantId_Email");
+        // Per-tenant uniqueness: two different tenants may share the same EmployeeNo or Email (filtered by not deleted)
+        builder.HasIndex(s => new { s.TenantId, s.EmployeeNo }).IsUnique().HasFilter("\"IsDeleted\" = false").HasDatabaseName("IX_Staff_TenantId_EmployeeNo");
+        builder.HasIndex(s => new { s.TenantId, s.Email }).IsUnique().HasFilter("\"IsDeleted\" = false").HasDatabaseName("IX_Staff_TenantId_Email");
         builder.HasIndex(s => s.TenantId);
         builder.HasIndex(s => new { s.TenantId, s.SystemRole });
+        builder.HasIndex(s => s.IsDeleted);
 
         builder.HasOne(s => s.Tenant)
                .WithMany(t => t.Staff)
@@ -60,6 +64,9 @@ public class StaffConfiguration : IEntityTypeConfiguration<Staff>
             PinHash = "AQAAAAIAAYagAAAAEFvn4SFv5/GxAt2+VZlbkxht0TV1NDZsRCBiFRT61dFmGmAWgtnSSrTT1q6iQElF1Q==",
             HiredAt = DateOnly.FromDateTime(new DateTime(2026, 1, 1)),
             IsActive = true,
+            IsDeleted = false,
+            MustChangePassword = false,
+            MustChangePin = false,
             CreatedAt = DateTimeOffset.Parse("2026-01-01T00:00:00Z")
         });
     }
