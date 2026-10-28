@@ -19,6 +19,10 @@ public class Staff : BaseEntity
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsDeleted { get; set; } = false;
+    public DateTimeOffset? DeletedAt { get; set; }
+    public bool MustChangePassword { get; set; } = false;
+    public bool MustChangePin { get; set; } = false;
     public required DateOnly HiredAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 

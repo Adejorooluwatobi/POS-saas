@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using POS.Domain.Interfaces;
 using POS.Domain.Repositories;
@@ -22,23 +25,24 @@ public class DeleteStaffCommandHandler : IRequestHandler<DeleteStaffCommand>
         var entity = await _repository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Staff {request.Id} not found.");
 
-        // Role-Based Deletion Logic
         if (_tenantContext.SystemRole == "Supervisor")
         {
             throw new UnauthorizedAccessException("Supervisors do not have permission to delete staff. Please contact a Manager or Admin.");
         }
 
-        if (_tenantContext.SystemRole == "Manager")
+        if (_tenantContext.SystemRole is "StoreManager" or "Manager")
         {
-            if (entity.StoreId != _tenantContext.StoreId)
+            if (_tenantContext.StoreId.HasValue && entity.StoreId != _tenantContext.StoreId)
             {
-                throw new UnauthorizedAccessException("Managers can only delete staff members belonging to their assigned store.");
+                throw new UnauthorizedAccessException("Store Managers can only delete staff members belonging to their assigned store.");
             }
         }
-        
-        // SuperAdmin and TenantAdmin can delete any.
 
-        _repository.Delete(entity);
+        entity.IsDeleted = true;
+        entity.DeletedAt = DateTimeOffset.UtcNow;
+        entity.IsActive = false;
+
+        _repository.Update(entity);
         await _uow.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,6 +1,8 @@
+using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using POS.Application.Commands.Auth.ChangePassword;
 using POS.Application.Commands.Auth.LoginAdmin;
 using POS.Application.Commands.Auth.LoginCustomer;
 using POS.Application.Commands.Auth.LoginPos;
@@ -12,7 +14,6 @@ namespace POS.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-[AllowAnonymous]
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -21,6 +22,7 @@ public class AuthController : ControllerBase
 
     /// <summary>Registers a new Business Tenant on the platform along with the initial Admin user.</summary>
     [HttpPost("register-tenant")]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterTenant([FromBody] RegisterTenantDto dto)
     {
         var result = await _mediator.Send(new RegisterTenantCommand(dto));
@@ -29,6 +31,7 @@ public class AuthController : ControllerBase
 
     /// <summary>Registers a new Consumer for loyalty and digital receipts.</summary>
     [HttpPost("register-customer")]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterCustomer([FromBody] RegisterCustomerDto dto)
     {
         var result = await _mediator.Send(new RegisterCustomerCommand(dto));
@@ -37,6 +40,7 @@ public class AuthController : ControllerBase
 
     /// <summary>Global Dashboard Login for Super Admins and passed Tenant Admins via Email/Password.</summary>
     [HttpPost("login-admin")]
+    [AllowAnonymous]
     public async Task<IActionResult> LoginAdmin([FromBody] AdminLoginDto dto)
     {
         var result = await _mediator.Send(new LoginAdminCommand(dto));
@@ -45,6 +49,7 @@ public class AuthController : ControllerBase
 
     /// <summary>Cashier Login from the physical POS Terminal using Employee No and PIN.</summary>
     [HttpPost("login-pos")]
+    [AllowAnonymous]
     public async Task<IActionResult> LoginPos([FromBody] PosLoginDto dto)
     {
         var result = await _mediator.Send(new LoginPosCommand(dto));
@@ -53,9 +58,19 @@ public class AuthController : ControllerBase
 
     /// <summary>Consumer Login for the loyalty portal.</summary>
     [HttpPost("login-customer")]
+    [AllowAnonymous]
     public async Task<IActionResult> LoginCustomer([FromBody] CustomerLoginDto dto)
     {
         var result = await _mediator.Send(new LoginCustomerCommand(dto));
+        return Ok(result);
+    }
+
+    /// <summary>Authenticated user changes password and sets cashier 4-digit PIN.</summary>
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        var result = await _mediator.Send(new ChangePasswordCommand(dto));
         return Ok(result);
     }
 }

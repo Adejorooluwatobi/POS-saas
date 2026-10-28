@@ -1,3 +1,5 @@
+using System;
+
 namespace POS.Application.DTOs;
 
 public class TenantDto
@@ -11,7 +13,12 @@ public class TenantDto
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; }
     public bool IsVerified { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
     public string? OwnerEmail { get; set; }
+    public string? OwnerName { get; set; }
+    public Guid? OwnerStaffId { get; set; }
+    public string? GeneratedPassword { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

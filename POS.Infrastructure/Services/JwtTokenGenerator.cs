@@ -14,7 +14,7 @@ public class JwtTokenGenerator : ITokenService
     private readonly IConfiguration _config;
     public JwtTokenGenerator(IConfiguration config) => _config = config;
 
-    public string GenerateToken(Guid id, string emailOrEmployeeNo, string role, string fullName, Guid? tenantId = null, Guid? storeId = null)
+    public string GenerateToken(Guid id, string emailOrEmployeeNo, string role, string fullName, Guid? tenantId = null, Guid? storeId = null, bool mustChangePassword = false, bool mustChangePin = false)
     {
         var secret = _config["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret missing.");
         var issuer = _config["Jwt:Issuer"];
@@ -27,7 +27,9 @@ public class JwtTokenGenerator : ITokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.NameIdentifier, id.ToString()),
             new(ClaimTypes.Name, fullName),
-            new("system_role", role)
+            new("system_role", role),
+            new("must_change_password", mustChangePassword ? "true" : "false"),
+            new("must_change_pin", mustChangePin ? "true" : "false")
         };
 
         if (emailOrEmployeeNo.Contains('@'))

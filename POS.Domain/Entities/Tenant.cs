@@ -15,6 +15,8 @@ public class Tenant : AuditableEntity
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsVerified { get; set; } = false;
+    public bool IsDeleted { get; set; } = false;
+    public DateTimeOffset? DeletedAt { get; set; }
 
     // Loyalty Program Settings
     public decimal LoyaltyPointsEarnRate { get; set; } = 100m;

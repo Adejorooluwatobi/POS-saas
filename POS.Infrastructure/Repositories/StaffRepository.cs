@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using POS.Domain.Entities;
@@ -13,20 +15,25 @@ public class StaffRepository : GenericRepository<Staff>, IStaffRepository
 
     public async Task<Staff?> GetByEmailAsync(string email, Guid? tenantId = null)
     {
+        var normalized = email.Trim().ToLower();
         return await _dbSet.FirstOrDefaultAsync(s =>
-            string.Equals(s.Email, email) &&
+            s.Email.ToLower() == normalized &&
             (tenantId == null || s.TenantId == tenantId));
     }
 
     public async Task<Staff?> GetByEmployeeNoAsync(Guid storeId, string employeeNo)
     {
-        return await _dbSet.FirstOrDefaultAsync(s => s.StoreId == storeId && string.Equals(s.EmployeeNo, employeeNo));
+        var normalized = employeeNo.Trim().ToLower();
+        return await _dbSet.FirstOrDefaultAsync(s =>
+            s.StoreId == storeId &&
+            s.EmployeeNo.ToLower() == normalized);
     }
 
     public async Task<Staff?> GetTenantAdminAsync(string email, Guid? tenantId = null)
     {
+        var normalized = email.Trim().ToLower();
         return await _dbSet.FirstOrDefaultAsync(s =>
-            string.Equals(s.Email, email) &&
+            s.Email.ToLower() == normalized &&
             s.SystemRole == Domain.Enums.SystemRole.TenantAdmin &&
             (tenantId == null || s.TenantId == tenantId));
     }

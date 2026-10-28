@@ -99,6 +99,11 @@ public class UpdateStaffCommandHandler : IRequestHandler<UpdateStaffCommand>
         _mapper.Map(request.Dto, entity);
         entity.SystemRole = targetRole;
 
+        if (!string.IsNullOrWhiteSpace(entity.Email))
+        {
+            entity.Email = entity.Email.Trim().ToLowerInvariant();
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Dto.Pin))
         {
             entity.PinHash = _passwordService.Hash(request.Dto.Pin);

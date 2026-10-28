@@ -63,13 +63,13 @@ public class RetailOsDbContext : DbContext
         // Apply all IEntityTypeConfiguration<T> in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(RetailOsDbContext).Assembly);
 
-        // ── GLOBAL QUERY FILTERS (Multi-Tenancy) ─────────────────────────────
-        // Tenant can only see their own record (SuperAdmin sees all)
-        modelBuilder.Entity<Tenant>().HasQueryFilter(t => _tenant.IsSuperAdmin || _tenant.TenantId == null || t.Id == _tenant.TenantId);
+        // ── GLOBAL QUERY FILTERS (Multi-Tenancy & Soft Deletion) ───────────────
+        // Tenant can only see their own non-deleted record (SuperAdmin sees all non-deleted)
+        modelBuilder.Entity<Tenant>().HasQueryFilter(t => !t.IsDeleted && (_tenant.IsSuperAdmin || _tenant.TenantId == null || t.Id == _tenant.TenantId));
 
         // Core tenant-scoped entities
         modelBuilder.Entity<Store>().HasQueryFilter(s => _tenant.TenantId == null || s.TenantId == _tenant.TenantId);
-        modelBuilder.Entity<Staff>().HasQueryFilter(s => (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.StoreId == _tenant.StoreId));
+        modelBuilder.Entity<Staff>().HasQueryFilter(s => !s.IsDeleted && (_tenant.TenantId == null || s.TenantId == _tenant.TenantId) && (_tenant.StoreId == null || s.StoreId == _tenant.StoreId));
         modelBuilder.Entity<Customer>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Category>().HasQueryFilter(c => _tenant.TenantId == null || c.TenantId == _tenant.TenantId);
         modelBuilder.Entity<Product>().HasQueryFilter(p => (_tenant.TenantId == null || p.TenantId == _tenant.TenantId) && (p.StoreId == null || _tenant.StoreId == null || p.StoreId == _tenant.StoreId));

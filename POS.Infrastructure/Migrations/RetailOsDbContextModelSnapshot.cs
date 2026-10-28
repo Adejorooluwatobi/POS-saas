@@ -1251,6 +1251,9 @@ namespace POS.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1272,10 +1275,25 @@ namespace POS.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("MustChangePassword")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("MustChangePin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(255)
@@ -1301,6 +1319,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IsDeleted");
+
                     b.HasIndex("RoleId");
 
                     b.HasIndex("StoreId");
@@ -1309,11 +1329,13 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "Email")
                         .IsUnique()
-                        .HasDatabaseName("IX_Staff_TenantId_Email");
+                        .HasDatabaseName("IX_Staff_TenantId_Email")
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("TenantId", "EmployeeNo")
                         .IsUnique()
-                        .HasDatabaseName("IX_Staff_TenantId_EmployeeNo");
+                        .HasDatabaseName("IX_Staff_TenantId_EmployeeNo")
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("TenantId", "SystemRole");
 
@@ -1329,7 +1351,10 @@ namespace POS.Infrastructure.Migrations
                             FirstName = "System",
                             HiredAt = new DateOnly(2026, 1, 1),
                             IsActive = true,
+                            IsDeleted = false,
                             LastName = "Admin",
+                            MustChangePassword = false,
+                            MustChangePin = false,
                             PasswordHash = "AQAAAAIAAYagAAAAEFvn4SFv5/GxAt2+VZlbkxht0TV1NDZsRCBiFRT61dFmGmAWgtnSSrTT1q6iQElF1Q==",
                             PinHash = "AQAAAAIAAYagAAAAEFvn4SFv5/GxAt2+VZlbkxht0TV1NDZsRCBiFRT61dFmGmAWgtnSSrTT1q6iQElF1Q==",
                             SystemRole = "SuperAdmin",
@@ -1611,8 +1636,16 @@ namespace POS.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsVerified")
                         .HasColumnType("boolean");
@@ -1644,12 +1677,16 @@ namespace POS.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContactEmail")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("IsActive");
 
+                    b.HasIndex("IsDeleted");
+
                     b.HasIndex("Slug")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Tenants", (string)null);
 
@@ -1662,13 +1699,14 @@ namespace POS.Infrastructure.Migrations
                             Country = "Global",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             IsActive = true,
+                            IsDeleted = false,
                             IsVerified = false,
                             LoyaltyMinRedemptionPoints = 50,
                             LoyaltyPointRedeemRate = 1m,
                             LoyaltyPointsEarnRate = 100m,
                             LoyaltyProgramEnabled = true,
                             Slug = "system",
-                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 26, 19, 55, 21, 734, DateTimeKind.Unspecified).AddTicks(131), new TimeSpan(0, 0, 0, 0, 0))
+                            UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 17, 34, 52, 757, DateTimeKind.Unspecified).AddTicks(7365), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
 

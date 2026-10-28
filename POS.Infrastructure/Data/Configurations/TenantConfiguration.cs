@@ -18,10 +18,12 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.ContactPhone).HasMaxLength(30);
         builder.Property(t => t.Country).IsRequired().HasMaxLength(100).HasDefaultValue("Nigeria");
         builder.Property(t => t.LogoUrl).HasMaxLength(500);
+        builder.Property(t => t.IsDeleted).HasDefaultValue(false);
 
-        builder.HasIndex(t => t.Slug).IsUnique();
-        builder.HasIndex(t => t.ContactEmail).IsUnique();
+        builder.HasIndex(t => t.Slug).IsUnique().HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(t => t.ContactEmail).IsUnique().HasFilter("\"IsDeleted\" = false");
         builder.HasIndex(t => t.IsActive);
+        builder.HasIndex(t => t.IsDeleted);
 
         // 1:1 with TenantSubscription
         builder.HasOne(t => t.Subscription)
@@ -37,6 +39,7 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             ContactEmail = "admin@retailos.com",
             Country = "Global",
             IsActive = true,
+            IsDeleted = false,
             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         });
     }
